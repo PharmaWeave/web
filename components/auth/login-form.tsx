@@ -7,37 +7,55 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { useRouter } from "next/navigation"
-
-type UserRole = "admin" | "gerente" | "funcionario"
+import ApiService from "@/services/api"
+import URLS from "@/services/urls"
+import useAuth from "@/hooks/use-auth"
 
 export function LoginForm() {
-  const [selectedRole, setSelectedRole] = useState<UserRole>("gerente")
-  const [cpf, setCpf] = useState("")
+  const { setAuth } = useAuth();
+
+  const [register, setRegister] = useState("")
   const [password, setPassword] = useState("")
-  const router = useRouter()
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Simple role-based routing
-    switch (selectedRole) {
-      case "admin":
-        router.push("/admin/dashboard")
-        break
-      case "gerente":
-        router.push("/manager/dashboard")
-        break
-      case "funcionario":
-        router.push("/employee/dashboard")
-        break
-    }
+    ApiService.post(URLS.AUTH.LOGIN, {
+      register: register,
+      password: password
+    }).then((data: { data: { access_token: string; } }) => setAuth(data.data.access_token));
   }
 
-  const formatCPF = (value: string) => {
+  const formatCPFOrCNPJForDisplay = (value: string) => {
     const numbers = value.replace(/\D/g, "")
-    return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
+
+    if (numbers.length <= 11) {
+      const part1 = numbers.slice(0, 3)
+      const part2 = numbers.slice(3, 6)
+      const part3 = numbers.slice(6, 9)
+      const part4 = numbers.slice(9, 11)
+
+      let formatted = part1
+      if (part2) formatted += "." + part2
+      if (part3) formatted += "." + part3
+      if (part4) formatted += "-" + part4
+
+      return formatted
+    } else {
+      const part1 = numbers.slice(0, 2)
+      const part2 = numbers.slice(2, 5)
+      const part3 = numbers.slice(5, 8)
+      const part4 = numbers.slice(8, 12)
+      const part5 = numbers.slice(12, 14)
+
+      let formatted = part1
+      if (part2) formatted += "." + part2
+      if (part3) formatted += "." + part3
+      if (part4) formatted += "/" + part4
+      if (part5) formatted += "-" + part5
+
+      return formatted
+    }
   }
 
   return (
@@ -53,33 +71,15 @@ export function LoginForm() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="flex gap-2 justify-center">
-          {(["admin", "gerente", "funcionario"] as UserRole[]).map((role) => (
-            <Badge
-              key={role}
-              variant={selectedRole === role ? "default" : "secondary"}
-              className={`cursor-pointer px-4 py-2 ${
-                selectedRole === role
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              }`}
-              onClick={() => setSelectedRole(role)}
-            >
-              {role === "admin" ? "Admin" : role === "gerente" ? "Gerente" : "Funcionário"}
-            </Badge>
-          ))}
-        </div>
-
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="cpf">CPF</Label>
+            <Label htmlFor="register">CPF/CNPJ</Label>
             <Input
-              id="cpf"
+              id="register"
               type="text"
-              placeholder="000.000.000-00"
-              value={cpf}
-              onChange={(e) => setCpf(formatCPF(e.target.value))}
-              maxLength={14}
+              value={formatCPFOrCNPJForDisplay(register)}
+              onChange={(e) => setRegister(e.target.value.replace(/\D/g, ""))}
+              maxLength={18}
               className="bg-input border-border text-foreground"
             />
           </div>
@@ -96,7 +96,7 @@ export function LoginForm() {
           </div>
 
           <Button type="submit" variant="default" size="lg" className="w-full">
-            Entrar como {selectedRole === "admin" ? "Admin" : selectedRole === "gerente" ? "Gerente" : "Funcionário"}
+            Entrar
           </Button>
         </form>
       </CardContent>

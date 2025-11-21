@@ -1,11 +1,9 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import {
   LayoutDashboard,
@@ -19,26 +17,24 @@ import {
   LogOut,
   User,
 } from "lucide-react"
+import { RoleEnum } from "@/@types/role"
+import useAuth from "@/hooks/use-auth"
 
-interface SidebarProps {
-  userRole: "admin" | "manager" | "employee"
-  userName: string
-}
+export function Sidebar() {
+  const { auth } = useAuth();
 
-export function Sidebar({ userRole, userName }: SidebarProps) {
   const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(false)
 
   const getNavItems = () => {
     const baseItems = [
       {
-        href: `/${userRole === "admin" ? "admin" : userRole === "manager" ? "manager" : "employee"}/dashboard`,
+        href: `/${auth?.role === RoleEnum.ADMIN ? "admin" : auth?.role === RoleEnum.MANAGER ? "manager" : "employee"}/dashboard`,
         label: "Visão Geral",
         icon: LayoutDashboard,
       },
     ]
 
-    if (userRole === "admin") {
+    if (auth?.role === RoleEnum.ADMIN) {
       return [
         ...baseItems,
         { href: "/admin/units", label: "Unidades", icon: Building2 },
@@ -47,7 +43,7 @@ export function Sidebar({ userRole, userName }: SidebarProps) {
       ]
     }
 
-    if (userRole === "manager") {
+    if (auth?.role === RoleEnum.MANAGER) {
       return [
         ...baseItems,
         { href: "/manager/employees", label: "Funcionários", icon: Users },
@@ -58,7 +54,7 @@ export function Sidebar({ userRole, userName }: SidebarProps) {
       ]
     }
 
-    if (userRole === "employee") {
+    if (auth?.role === RoleEnum.EMPLOYEE) {
       return [
         ...baseItems,
         { href: "/employee/products", label: "Produtos", icon: Package },
@@ -73,13 +69,7 @@ export function Sidebar({ userRole, userName }: SidebarProps) {
   const navItems = getNavItems()
 
   return (
-    <div
-      className={cn(
-        "flex flex-col h-screen bg-card border-r border-border transition-all duration-300",
-        isCollapsed ? "w-16" : "w-64",
-      )}
-    >
-      {/* Header */}
+    <div className="flex flex-col h-screen bg-card border-r border-border transition-all duration-300 w-64">
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
           <Avatar className="w-10 h-10 flex-shrink-0">
@@ -88,36 +78,29 @@ export function Sidebar({ userRole, userName }: SidebarProps) {
               <span className="text-sm font-bold">PW</span>
             </AvatarFallback>
           </Avatar>
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-foreground truncate">PharmaWeave</h2>
-              <p className="text-xs text-muted-foreground capitalize">{userRole}</p>
-            </div>
-          )}
+          <div className="flex-1 min-w-0">
+            <h2 className="font-semibold text-foreground truncate">PharmaWeave</h2>
+            <p className="text-xs text-muted-foreground capitalize">
+              {auth?.role === RoleEnum.ADMIN ? "Administrador" : auth?.role === RoleEnum.MANAGER ? "Gerente" : "Funcionário"}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* User Info */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
           <Avatar className="w-8 h-8 flex-shrink-0">
-            <AvatarImage src="/images/pharmaweave-logo.png" alt={`${userName} Avatar`} />
+            <AvatarImage src="/images/pharmaweave-logo.png" alt={`User Avatar`} />
             <AvatarFallback className="bg-secondary text-secondary-foreground">
               <User className="w-4 h-4" />
             </AvatarFallback>
           </Avatar>
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">{userName}</p>
-              <Badge variant="secondary" className="text-xs">
-                Online
-              </Badge>
-            </div>
-          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground truncate">User</p>
+          </div>
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
         {navItems.map((item) => {
           const Icon = item.icon
@@ -134,14 +117,13 @@ export function Sidebar({ userRole, userName }: SidebarProps) {
                 )}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
-                {!isCollapsed && <span className="truncate">{item.label}</span>}
+                <span className="truncate">{item.label}</span>
               </Button>
             </Link>
           )
         })}
       </nav>
 
-      {/* Footer */}
       <div className="p-4 border-t border-border">
         <Button
           variant="ghost"
@@ -149,7 +131,7 @@ export function Sidebar({ userRole, userName }: SidebarProps) {
           onClick={() => (window.location.href = "/")}
         >
           <LogOut className="w-4 h-4 flex-shrink-0" />
-          {!isCollapsed && <span>Sair</span>}
+          <span>Sair</span>
         </Button>
       </div>
     </div>

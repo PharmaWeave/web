@@ -6,6 +6,8 @@ import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import "./globals.css"
 
+import AuthContextProvider from "@/contexts/auth-context"
+
 export const metadata: Metadata = {
   title: "v0 App",
   description: "Created with v0",
@@ -20,7 +22,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <Suspense fallback={null}>{children}</Suspense>
+        <Suspense fallback={null}>
+          <AuthContextProvider>
+            {children}
+          </AuthContextProvider>
+        </Suspense>
         <Analytics />
       </body>
     </html>

@@ -3,14 +3,12 @@ import { Sidebar } from "./sidebar"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
-  userRole: "admin" | "manager" | "employee"
-  userName: string
 }
 
-export function DashboardLayout({ children, userRole, userName }: DashboardLayoutProps) {
+export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen bg-background">
-      <Sidebar userRole={userRole} userName={userName} />
+      <Sidebar />
       <main className="flex-1 overflow-auto">{children}</main>
     </div>
   )

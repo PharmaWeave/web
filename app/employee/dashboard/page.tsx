@@ -48,7 +48,7 @@ export default function EmployeeDashboard() {
   ]
 
   return (
-    <DashboardLayout userRole="employee" userName="Usuário">
+    <DashboardLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div>
@@ -57,34 +57,21 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <StatCard
             title="Vendas Hoje"
             value="23"
-            subtitle="Meta: 30 vendas"
             icon={ShoppingCart}
-            trend={{ value: "77%", isPositive: true }}
-          />
-          <StatCard
-            title="Produtos em Estoque"
-            value="1,847"
-            subtitle="23 com estoque baixo"
-            icon={Package}
-            trend={{ value: "2", isPositive: false }}
           />
           <StatCard
             title="Clientes Atendidos"
             value="45"
-            subtitle="Hoje"
             icon={Users}
-            trend={{ value: "12%", isPositive: true }}
           />
           <StatCard
             title="Faturamento Hoje"
             value="R$ 3,247"
-            subtitle="Meta: R$ 4,000"
             icon={DollarSign}
-            trend={{ value: "81%", isPositive: true }}
           />
         </div>
 

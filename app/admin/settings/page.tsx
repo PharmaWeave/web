@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function SettingsPage() {
   return (
-    <DashboardLayout userRole="admin" userName="Administrador">
+    <DashboardLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div>

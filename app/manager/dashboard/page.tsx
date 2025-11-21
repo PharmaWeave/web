@@ -48,7 +48,7 @@ export default function ManagerDashboard() {
   ]
 
   return (
-    <DashboardLayout userRole="manager" userName="Gerente">
+    <DashboardLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div>
