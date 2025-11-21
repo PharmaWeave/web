@@ -65,8 +65,6 @@ const AuthContextProvider = ({ children, ...props }: AuthContextProviderProps) =
     }, []);
 
     useEffect(() => {
-        console.log("AUTH: ", auth);
-
         if (auth?.access_token) {
             switch (auth.role) {
                 case RoleEnum.EMPLOYEE:

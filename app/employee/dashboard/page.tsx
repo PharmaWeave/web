@@ -1,8 +1,7 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { StatCard } from "@/components/ui/stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ShoppingCart, Package, Users, DollarSign, Clock, AlertTriangle, CheckCircle } from "lucide-react"
+import { ShoppingCart, Users, DollarSign, Clock } from "lucide-react"
 
 export default function EmployeeDashboard() {
   const recentActivities = [
@@ -26,37 +25,14 @@ export default function EmployeeDashboard() {
     },
   ]
 
-  const alerts = [
-    {
-      id: 1,
-      title: "23 produtos com estoque baixo",
-      subtitle: "Requer atenção",
-      type: "warning",
-    },
-    {
-      id: 2,
-      title: "Promoção termina em 2 dias",
-      subtitle: "Desconto 15% Vitaminas",
-      type: "info",
-    },
-    {
-      id: 3,
-      title: "87% da meta mensal atingida",
-      subtitle: "Ótimo progresso!",
-      type: "success",
-    },
-  ]
-
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
-        {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-foreground">Painel do Funcionário</h1>
           <p className="text-muted-foreground">Visão geral do sistema</p>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <StatCard
             title="Vendas Hoje"
@@ -75,8 +51,7 @@ export default function EmployeeDashboard() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Activities */}
+        <div className="grid grid-cols-1 gap-6">
           <Card className="gradient-card border-border/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -88,63 +63,17 @@ export default function EmployeeDashboard() {
               {recentActivities.map((activity) => (
                 <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
                   <div
-                    className={`w-2 h-2 rounded-full mt-2 ${
-                      activity.type === "success"
-                        ? "bg-green-500"
-                        : activity.type === "info"
-                          ? "bg-blue-500"
-                          : "bg-yellow-500"
-                    }`}
+                    className={`w-2 h-2 rounded-full mt-2 ${activity.type === "success"
+                      ? "bg-green-500"
+                      : activity.type === "info"
+                        ? "bg-blue-500"
+                        : "bg-yellow-500"
+                      }`}
                   />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">{activity.title}</p>
                     <p className="text-xs text-muted-foreground">{activity.time}</p>
                   </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Alerts and Notifications */}
-          <Card className="gradient-card border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Alertas e Notificações
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {alerts.map((alert) => (
-                <div key={alert.id} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      alert.type === "warning"
-                        ? "bg-yellow-500/20 text-yellow-500"
-                        : alert.type === "success"
-                          ? "bg-green-500/20 text-green-500"
-                          : "bg-blue-500/20 text-blue-500"
-                    }`}
-                  >
-                    {alert.type === "warning" ? (
-                      <AlertTriangle className="w-4 h-4" />
-                    ) : alert.type === "success" ? (
-                      <CheckCircle className="w-4 h-4" />
-                    ) : (
-                      <Clock className="w-4 h-4" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{alert.title}</p>
-                    <p className="text-xs text-muted-foreground">{alert.subtitle}</p>
-                  </div>
-                  <Badge
-                    variant={
-                      alert.type === "warning" ? "destructive" : alert.type === "success" ? "default" : "secondary"
-                    }
-                    className="text-xs"
-                  >
-                    {alert.type === "warning" ? "Atenção" : alert.type === "success" ? "Sucesso" : "Info"}
-                  </Badge>
                 </div>
               ))}
             </CardContent>

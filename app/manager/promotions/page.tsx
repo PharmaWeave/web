@@ -6,61 +6,110 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { StatCard } from "@/components/ui/stat-card"
-import { Tag, Plus, Search, Calendar, Edit, Power } from "lucide-react"
-import { useState } from "react"
+import { Tag, Plus, Search, Calendar, Trash2Icon, CheckCircle2Icon } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { StatusType } from "@/@types/status"
+import useAuth from "@/hooks/use-auth"
+import URLS from "@/services/urls"
+import ApiService from "@/services/api"
+import normalize from "@/utils/nomalize"
+
+interface Promotion {
+  id: number;
+  title: string;
+  description: string;
+  type: string;
+  value: number;
+  constraint: number;
+  start: string;
+  end: string;
+  branch_id: number;
+  products: PromotionProduct[];
+
+  createdAt: string;
+  updatedAt: string;
+  status: StatusType;
+}
+
+interface PromotionProduct {
+  id: number;
+  product_info_id: number;
+  promotion_id: number;
+  product_info: ProductInfo;
+
+  createdAt: string;
+  updatedAt: string;
+  status: StatusType;
+}
+
+interface ProductInfo {
+  id: number;
+  price: number;
+  stock: number;
+  product_id: number;
+  branch_id: number;
+  product: Product;
+
+  createdAt: string;
+  updatedAt: string;
+  status: StatusType;
+}
+
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  brand_id: number;
+
+  createdAt: string;
+  updatedAt: string;
+  status: StatusType;
+}
 
 export default function PromotionsPage() {
-  const [promotions, setPromotions] = useState([
-    {
-      id: 1,
-      name: "Desconto de Verão",
-      type: "Percentual",
-      discount: "20%",
-      minPurchase: "R$ 50",
-      period: "30/11/2024 - 30/12/2024",
-      usage: "45/200",
-      products: ["Paracetamol", "Dipirona", "+1"],
-      status: "active",
-    },
-    {
-      id: 2,
-      name: "Compre 2 Leve 3",
-      type: "Compre X Leve Y",
-      discount: "Leve 3",
-      minPurchase: "Compra mín: R$ 50",
-      period: "14/11/2024 - 14/12/2024",
-      usage: "23/100",
-      products: ["Vitamina C", "Vitamina D", "+1"],
-      status: "active",
-    },
-    {
-      id: 3,
-      name: "Black Friday",
-      type: "Valor Fixo",
-      discount: "R$ 30",
-      minPurchase: "Compra mín: R$ 200",
-      period: "28/11/2024 - 28/11/2024",
-      usage: "89/500",
-      products: [],
-      status: "expired",
-    },
-  ])
+  const { auth } = useAuth()
 
-  const handleToggleStatus = (promotionId: number) => {
-    setPromotions((prevPromotions) =>
-      prevPromotions.map((promotion) =>
-        promotion.id === promotionId
-          ? { ...promotion, status: promotion.status === "active" ? "inactive" : "active" }
-          : promotion,
-      ),
-    )
-    console.log(`[v0] Promoção ${promotionId} status alterado`)
+  const [promotions, setPromotions] = useState<Promotion[]>([])
+
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    ApiService.get(URLS.PROMOTION.LIST, {}, auth?.access_token).then((data: { data: Promotion[] }) => setPromotions(data.data));
+  }, []);
+
+  const IsPromotionActive = (promotion: Promotion) => {
+    const now = new Date()
+
+    const start = new Date(promotion.start)
+    const end = new Date(promotion.end)
+
+    if (start <= now && end >= now) return 0;
+    if (end <= now) return -1;
+    return 1;
+  };
+
+  const filteredPromotions = useMemo(() => {
+    let current = promotions;
+
+    if (search.trim().length > 0) {
+      const s = normalize(search.toLowerCase());
+
+      current = current.filter((promotion) =>
+        normalize(promotion.title.toLowerCase()).includes(s)
+        || normalize(promotion.description.toLowerCase()).includes(s)
+      );
+    }
+
+    return current;
+  }, [search, promotions]);
+
+  const handleDelete = (promotionId: number) => {
+
   }
 
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Promoções</h1>
@@ -72,73 +121,62 @@ export default function PromotionsPage() {
           </Button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard title="Total de Promoções" value="3" icon={Tag} />
-          <StatCard title="Promoções Ativas" value="2" icon={Tag} />
-          <StatCard title="Agendadas" value="0" icon={Calendar} />
+        <div className="grid grid-cols-2 gap-6">
+          <StatCard title="Promoções Ativas" value={promotions.filter(p => !IsPromotionActive(p)).length} icon={Tag} />
+          <StatCard title="Agendadas" value={promotions.filter(p => IsPromotionActive(p) > 0).length} icon={Calendar} />
         </div>
 
-        {/* Search */}
         <Card className="gradient-card border-border/50">
           <CardContent className="p-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Buscar promoções..." className="pl-10 bg-input border-border" />
+              <Input
+                placeholder="Buscar promoções por nome..."
+                className="pl-10 bg-input border-border"
+                onChange={e => setSearch(e.currentTarget.value)}
+              />
             </div>
           </CardContent>
         </Card>
 
-        {/* Promotions Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {promotions.map((promotion) => (
+          {filteredPromotions.map((promotion) => (
             <Card key={promotion.id} className="gradient-card border-border/50">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-lg">{promotion.name}</CardTitle>
+                    <CardTitle className="text-lg">{promotion.title}</CardTitle>
+                    <span className="text-sm">
+                      {promotion.description}
+                    </span>
                     <div className="flex gap-2 mt-2">
-                      <Badge
-                        variant={
-                          promotion.status === "active"
-                            ? "default"
-                            : promotion.status === "expired"
-                              ? "destructive"
-                              : "secondary"
-                        }
-                      >
-                        {promotion.status === "active"
-                          ? "Ativa"
-                          : promotion.status === "expired"
-                            ? "Expirada"
-                            : promotion.status === "inactive"
-                              ? "Inativa"
-                              : "Agendada"}
+                      <Badge variant={!IsPromotionActive(promotion) ? "default" : IsPromotionActive(promotion) > 0 ? "destructive" : "outline"}>
+                        {!IsPromotionActive(promotion) ? "Ativa" : IsPromotionActive(promotion) > 0 ? "Agendada" : "Expirada"}
                       </Badge>
-                      <Badge variant="outline">{promotion.type}</Badge>
+                      <Badge variant="outline">{promotion.type === "P" ? "Percentual" : "Valor Fixo"}</Badge>
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button size="sm" variant="ghost" className="w-8 h-8 p-0">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="w-8 h-8 p-0"
-                      onClick={() => handleToggleStatus(promotion.id)}
-                      disabled={promotion.status === "expired"}
-                    >
-                      <Power
-                        className={`w-4 h-4 ${
-                          promotion.status === "expired"
-                            ? "text-gray-400"
-                            : promotion.status === "active"
-                              ? "text-red-500"
-                              : "text-green-500"
-                        }`}
-                      />
-                    </Button>
+                    {IsPromotionActive(promotion) >= 0 && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="w-8 h-8 p-0"
+                          onClick={() => handleDelete(promotion.id)}
+                        >
+                          <CheckCircle2Icon className="w-4 h-4 text-green-500" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="w-8 h-8 p-0"
+                          onClick={() => handleDelete(promotion.id)}
+                        >
+                          <Trash2Icon className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -146,11 +184,13 @@ export default function PromotionsPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Desconto:</span>
-                    <span className="text-sm font-medium text-blue-500">{promotion.discount}</span>
+                    <span className="text-sm font-medium text-blue-500">
+                      {promotion.type !== "P" && "R$"} {promotion.value} {promotion.type === "P" && "%"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Compra mín:</span>
-                    <span className="text-sm font-medium text-foreground">{promotion.minPurchase}</span>
+                    <span className="text-sm font-medium text-foreground">R$ {(promotion.constraint / 100).toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -159,14 +199,11 @@ export default function PromotionsPage() {
                     <Calendar className="w-4 h-4 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">Período:</span>
                   </div>
-                  <p className="text-xs text-foreground">{promotion.period}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Usos:</span>
-                    <span className="text-sm font-medium text-foreground">{promotion.usage}</span>
-                  </div>
+                  <p className="flex flex-col justify-center items-center text-xs text-foreground">
+                    <span>{new Date(promotion.start).toLocaleString("pt-BR")}</span>
+                    até
+                    <span>{new Date(promotion.end).toLocaleString("pt-BR")}</span>
+                  </p>
                 </div>
 
                 {promotion.products.length > 0 && (
@@ -175,7 +212,7 @@ export default function PromotionsPage() {
                     <div className="flex flex-wrap gap-1">
                       {promotion.products.map((product, index) => (
                         <Badge key={index} variant="secondary" className="text-xs">
-                          {product}
+                          {product.product_info.product.name}
                         </Badge>
                       ))}
                     </div>

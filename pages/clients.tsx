@@ -10,32 +10,20 @@ import { Button } from "@/components/ui/button"
 import { StatusEnum, StatusType } from "@/@types/status"
 import ApiService, { ApiResponse } from "@/services/api"
 import URLS from "@/services/urls"
-import formatCPF from "@/utils/cpf"
+import { formatCPF } from "@/utils/cpf"
 import normalize from "@/utils/nomalize"
 import useAuth from "@/hooks/use-auth"
 
-interface Sale {
-    id: number;
-    total_amount: number;
-    user_id: number;
-    employee_id: number;
-    promotion_id: number | null;
-
-    createdAt: Date;
-    updatedAt: Date;
-    status: StatusType;
-}
-
 interface Customer {
-    id: number;
-    name: string;
-    register: string;
-    email: string | null;
-    sales: Sale[]
+    user_id: number;
+    user_name: string;
+    user_register: string;
+    user_email: string | null;
+    total_spent: number;
+    total_purchases: number;
+    last_purchase: number;
 
-    createdAt: Date;
-    updatedAt: Date;
-    status: StatusType;
+    user_status: StatusType;
 }
 
 export default function ClientsPage() {
@@ -47,20 +35,10 @@ export default function ClientsPage() {
     const [clients, setClients] = useState<Customer[]>([])
 
     useEffect(() => {
-        ApiService.get(URLS.USER.CUSTOMER.LIST, {}, auth?.access_token).then((data: ApiResponse<Customer>) => setClients(data.data))
+        ApiService.get(URLS.SALE.USER.METRICS, {}, auth?.access_token).then((data: ApiResponse<Customer>) => setClients(data.data))
     }, [])
 
-    const isCustomerActive = (customer: Customer) => { return customer.status === StatusEnum.ACTIVE; }
-
-    const sumSalesAmount = (customer: Customer) => {
-        let total = 0;
-
-        for (let sale of customer.sales) {
-            total += sale.total_amount;
-        }
-
-        return total;
-    }
+    const isCustomerActive = (customer: Customer) => { return customer.user_status === StatusEnum.ACTIVE; }
 
     const filteredClients = useMemo(() => {
         let current = clients;
@@ -73,10 +51,10 @@ export default function ClientsPage() {
             const s = normalize(search.toLowerCase());
 
             current = current.filter((product) =>
-                normalize(product.name.toLowerCase()).includes(s)
-                || product.register.includes(s)
-                || formatCPF(product.register).includes(s)
-                || normalize(product.email?.toLowerCase() ?? "").includes(s)
+                normalize(product.user_name.toLowerCase()).includes(s)
+                || product.user_register.includes(s)
+                || formatCPF(product.user_register).includes(s)
+                || normalize(product.user_email?.toLowerCase() ?? "").includes(s)
             );
         }
 
@@ -147,15 +125,17 @@ export default function ClientsPage() {
                                 <tbody>
                                     {filteredClients.map((client) => (
                                         <tr
-                                            key={client.id}
+                                            key={client.user_id}
                                             className={`border-b border-border/50 hover:bg-secondary/50 ${!isCustomerActive(client) ? "opacity-60" : ""}`}
                                         >
-                                            <td className="p-3 text-sm font-medium text-foreground">{client.name}</td>
-                                            <td className="p-3 text-sm text-foreground">{client.email ?? "-"}</td>
-                                            <td className="p-3 text-sm text-foreground">{formatCPF(client.register)}</td>
-                                            <td className="p-3 text-sm text-foreground">{client.sales.length}</td>
-                                            <td className="p-3 text-sm font-medium text-green-500">R$ {sumSalesAmount(client) / 100}</td>
-                                            <td className="p-3 text-sm text-foreground">{0}</td>
+                                            <td className="p-3 text-sm font-medium text-foreground">{client.user_name}</td>
+                                            <td className="p-3 text-sm text-foreground">{client.user_email ?? "-"}</td>
+                                            <td className="p-3 text-sm text-foreground">{formatCPF(client.user_register)}</td>
+                                            <td className="p-3 text-sm text-foreground">{client.total_purchases}</td>
+                                            <td className="p-3 text-sm font-medium text-green-500">R$ {(client.total_spent / 100).toFixed(2)}</td>
+                                            <td className="p-3 text-sm text-foreground">
+                                                {client.last_purchase ? new Date(client.last_purchase).toLocaleString("pt-BR") : "-"}
+                                            </td>
                                             <td className="p-3">
                                                 <Badge variant={isCustomerActive(client) ? "default" : "secondary"} className="text-xs">
                                                     {isCustomerActive(client) ? "Ativo" : "Inativo"}

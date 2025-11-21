@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import ApiService from "@/services/api"
 import URLS from "@/services/urls"
 import useAuth from "@/hooks/use-auth"
+import { formatCPFOrCNPJ } from "@/utils/cpf"
 
 export function LoginForm() {
   const { setAuth } = useAuth();
@@ -24,38 +25,6 @@ export function LoginForm() {
       register: register,
       password: password
     }).then((data: { data: { access_token: string; } }) => setAuth(data.data.access_token));
-  }
-
-  const formatCPFOrCNPJForDisplay = (value: string) => {
-    const numbers = value.replace(/\D/g, "")
-
-    if (numbers.length <= 11) {
-      const part1 = numbers.slice(0, 3)
-      const part2 = numbers.slice(3, 6)
-      const part3 = numbers.slice(6, 9)
-      const part4 = numbers.slice(9, 11)
-
-      let formatted = part1
-      if (part2) formatted += "." + part2
-      if (part3) formatted += "." + part3
-      if (part4) formatted += "-" + part4
-
-      return formatted
-    } else {
-      const part1 = numbers.slice(0, 2)
-      const part2 = numbers.slice(2, 5)
-      const part3 = numbers.slice(5, 8)
-      const part4 = numbers.slice(8, 12)
-      const part5 = numbers.slice(12, 14)
-
-      let formatted = part1
-      if (part2) formatted += "." + part2
-      if (part3) formatted += "." + part3
-      if (part4) formatted += "/" + part4
-      if (part5) formatted += "-" + part5
-
-      return formatted
-    }
   }
 
   return (
@@ -77,7 +46,7 @@ export function LoginForm() {
             <Input
               id="register"
               type="text"
-              value={formatCPFOrCNPJForDisplay(register)}
+              value={formatCPFOrCNPJ(register)}
               onChange={(e) => setRegister(e.target.value.replace(/\D/g, ""))}
               maxLength={18}
               className="bg-input border-border text-foreground"
