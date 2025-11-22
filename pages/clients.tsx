@@ -13,12 +13,17 @@ import URLS from "@/services/urls"
 import { formatCPF } from "@/utils/cpf"
 import normalize from "@/utils/nomalize"
 import useAuth from "@/hooks/use-auth"
+import ClientDialog, { ClientForm } from "@/components/client-dialog"
+import Toast from "@/utils/toast"
+import { RoleEnum, RoleType } from "@/@types/role"
 
-interface Customer {
+export interface Customer {
     user_id: number;
     user_name: string;
     user_register: string;
-    user_email: string | null;
+    user_role: RoleType;
+    user_email?: string;
+
     total_spent: number;
     total_purchases: number;
     last_purchase: number;
@@ -26,17 +31,29 @@ interface Customer {
     user_status: StatusType;
 }
 
+interface CustomerStatus {
+    status: StatusType
+}
+
 export default function ClientsPage() {
     const { auth } = useAuth();
+
+    const [editingClient, setEditingClient] = useState<Customer | undefined>()
 
     const [showActiveOnly, setShowActiveOnly] = useState(true)
     const [search, setSearch] = useState("")
 
     const [clients, setClients] = useState<Customer[]>([])
 
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+
     useEffect(() => {
-        ApiService.get(URLS.SALE.USER.METRICS, {}, auth?.access_token).then((data: ApiResponse<Customer>) => setClients(data.data))
+        fetchClients()
     }, [])
+
+    const fetchClients = () => {
+        ApiService.get(URLS.SALE.USER.METRICS, {}, auth?.access_token).then((data: ApiResponse<Customer[]>) => setClients(data.data))
+    }
 
     const isCustomerActive = (customer: Customer) => { return customer.user_status === StatusEnum.ACTIVE; }
 
@@ -50,16 +67,54 @@ export default function ClientsPage() {
         if (search.trim().length > 0) {
             const s = normalize(search.toLowerCase());
 
-            current = current.filter((product) =>
-                normalize(product.user_name.toLowerCase()).includes(s)
-                || product.user_register.includes(s)
-                || formatCPF(product.user_register).includes(s)
-                || normalize(product.user_email?.toLowerCase() ?? "").includes(s)
+            current = current.filter((client) =>
+                normalize(client.user_name.toLowerCase()).includes(s)
+                || client.user_register.includes(s)
+                || formatCPF(client.user_register).includes(s)
+                || normalize(client.user_email?.toLowerCase() ?? "").includes(s)
             );
         }
 
         return current;
     }, [showActiveOnly, search, clients]);
+
+    const handleSubmit = async (e: React.FormEvent, form: ClientForm): Promise<boolean> => {
+        e.preventDefault()
+
+        const body: ClientForm = {
+            register: form.register.replace(/\./g, "").replace(/\-/g, ""),
+            name: form.name,
+            email: form.email
+        }
+
+        try {
+            if (editingClient) {
+                await ApiService.patch(URLS.USER.CUSTOMER.UPDATE(editingClient.user_id), body, auth?.access_token)
+                Toast.success("Cliente atualizado!")
+            } else {
+                await ApiService.post(URLS.USER.CUSTOMER.POST, body, auth?.access_token)
+                Toast.success("Cliente criado!")
+            }
+
+            fetchClients()
+
+            setEditingClient(undefined)
+            setIsDialogOpen(false)
+        } catch (err) {
+            return false
+        }
+
+        return true
+    }
+
+    const handleInactivate = (user_id: number) => {
+        ApiService.patch(URLS.USER.CUSTOMER.STATUS(user_id), {}, auth?.access_token)
+            .then((data: ApiResponse<CustomerStatus>) => {
+                fetchClients()
+
+                Toast.success(`Cliente ${data.data.status === StatusEnum.ACTIVE ? "ativado" : "desativado"}!`)
+            })
+    }
 
     return (
         <DashboardLayout>
@@ -69,10 +124,18 @@ export default function ClientsPage() {
                         <h1 className="text-3xl font-bold text-foreground">Clientes</h1>
                         <p className="text-muted-foreground">Gerencie os clientes da farmácia</p>
                     </div>
-                    <Button className="gradient-primary text-white">
+                    <Button className="gradient-primary text-white" onClick={() => setIsDialogOpen(true)}>
                         <Plus className="w-4 h-4 mr-2" />
                         Novo Cliente
                     </Button>
+
+                    <ClientDialog
+                        isDialogOpen={isDialogOpen}
+                        setIsDialogOpen={setIsDialogOpen}
+                        handleSubmit={handleSubmit}
+                        setEditingClient={setEditingClient}
+                        editingClient={editingClient}
+                    />
                 </div>
 
                 <Card className="gradient-card border-border/50">
@@ -143,19 +206,32 @@ export default function ClientsPage() {
                                             </td>
                                             <td className="p-3">
                                                 <div className="flex gap-1">
-                                                    <Button size="sm" variant="ghost" className="w-8 h-8 p-0">
-                                                        <Edit className="w-4 h-4 text-muted-foreground" />
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="w-8 h-8 p-0"
-                                                        onClick={() => { }}
-                                                    >
-                                                        <Power
-                                                            className={`w-4 h-4 ${isCustomerActive(client) ? "text-red-500" : "text-green-500"}`}
-                                                        />
-                                                    </Button>
+                                                    {(auth?.role === RoleEnum.EMPLOYEE && client.user_role !== RoleEnum.MANAGER)
+                                                        && (
+                                                            <Button size="sm" variant="ghost"
+                                                                className="w-8 h-8 p-0"
+                                                                onClick={() => {
+                                                                    setEditingClient(client)
+                                                                    setIsDialogOpen(true)
+                                                                }}
+                                                            >
+                                                                <Edit className="w-4 h-4 text-muted-foreground" />
+                                                            </Button>
+                                                        )}
+                                                    {((auth?.role === RoleEnum.EMPLOYEE && client.user_role === RoleEnum.USER)
+                                                        || (auth?.role === RoleEnum.MANAGER))
+                                                        && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="w-8 h-8 p-0"
+                                                                onClick={() => handleInactivate(client.user_id)}
+                                                            >
+                                                                <Power
+                                                                    className={`w-4 h-4 ${isCustomerActive(client) ? "text-red-500" : "text-green-500"}`}
+                                                                />
+                                                            </Button>
+                                                        )}
                                                 </div>
                                             </td>
                                         </tr>

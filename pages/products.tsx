@@ -5,22 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { StatCard } from "@/components/ui/stat-card"
-import { Package, Search, AlertTriangle, Plus, Edit, Power } from "lucide-react"
+import { Package, Search, AlertTriangle, Edit, Power, Plus } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { StatusEnum, StatusType } from "@/@types/status"
-import ApiService from "@/services/api"
+import ApiService, { ApiResponse } from "@/services/api"
 import URLS from "@/services/urls"
 import { Button } from "@/components/ui/button"
 import normalize from "@/utils/nomalize"
 import useAuth from "@/hooks/use-auth"
+import ProductDialog, { ProductForm } from "@/components/product-dialog"
+import Toast from "@/utils/toast"
 
-interface Product {
+export interface Product {
   id: number;
   name: string;
   description: string;
   brand_id: number;
 
   info: {
+    id: number;
     price: number;
     stock: number;
     branch_id: number;
@@ -36,17 +39,29 @@ interface Product {
   status: StatusType;
 }
 
+interface ProductInfoStatus {
+  status: StatusType
+}
+
 export default function ProductsPage() {
   const { auth } = useAuth();
 
-  const [showActiveOnly, setShowActiveOnly] = useState(true)
-  const [search, setSearch] = useState("");
+  const [editingProduct, setEditingProduct] = useState<Product | undefined>()
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [showActiveOnly, setShowActiveOnly] = useState(true)
+  const [search, setSearch] = useState("")
+
+  const [products, setProducts] = useState<Product[]>([])
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   useEffect(() => {
-    ApiService.get(URLS.PRODUCT.LIST, {}, auth?.access_token).then((data: { data: Product[] }) => setProducts(data.data));
+    fetchProducts()
   }, []);
+
+  const fetchProducts = () => {
+    ApiService.get(URLS.PRODUCT.LIST, {}, auth?.access_token).then((data: ApiResponse<Product[]>) => setProducts(data.data))
+  }
 
   const IsProductActive = (product: Product) => { return product.info.status === StatusEnum.ACTIVE && product.status === StatusEnum.ACTIVE; };
 
@@ -80,18 +95,61 @@ export default function ProductsPage() {
     return counter;
   };
 
+  const handleSubmit = (e: React.FormEvent, form: ProductForm) => {
+    e.preventDefault()
+
+    const numericPrice = Number(form.price.replace(/\./g, "").replace(/\,/g, ""))
+    const numericStock = Number(form.stock)
+
+    const body = {
+      name: form.name,
+      description: form.description,
+      info: {
+        price: numericPrice,
+        stock: numericStock
+      }
+    }
+
+    const api = editingProduct
+      ? ApiService.patch(URLS.PRODUCT.UPDATE(editingProduct.id), body, auth?.access_token)
+      : ApiService.post(URLS.PRODUCT.POST, body, auth?.access_token)
+
+    api.then(() => {
+      fetchProducts()
+
+      setIsDialogOpen(false)
+      Toast.success(editingProduct ? "Produto atualizado!" : "Produto criado!")
+    }).finally(() => setEditingProduct(undefined))
+  };
+
+  const handleInactivate = (product_info_id: number) => {
+    ApiService.patch(URLS.PRODUCT.STATUS(product_info_id), {}, auth?.access_token)
+      .then((data: ApiResponse<ProductInfoStatus>) => {
+        fetchProducts()
+
+        Toast.success(`Produto ${data.data.status === StatusEnum.ACTIVE ? "ativado" : "desativado"}!`)
+      })
+  }
+
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="flex flex-col h-full p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Produtos</h1>
             <p className="text-muted-foreground">Gerencie o estoque da farmácia</p>
           </div>
-          <Button className="gradient-primary text-white">
+          <Button className="gradient-primary text-white" onClick={() => setIsDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Novo Produto
           </Button>
+
+          <ProductDialog
+            isDialogOpen={isDialogOpen}
+            setIsDialogOpen={setIsDialogOpen}
+            handleSubmit={handleSubmit}
+            editingProduct={editingProduct}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -127,7 +185,7 @@ export default function ProductsPage() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-auto">
           {filteredProducts.map((product) => (
             <Card key={product.id} className={`gradient-card border-border/50 ${!(IsProductActive(product)) ? "opacity-60" : ""}`}>
               <CardHeader className="flex justify-between gap-2 pb-3">
@@ -145,14 +203,22 @@ export default function ProductsPage() {
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <Button size="sm" variant="ghost" className="w-8 h-8 p-0">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="w-8 h-8 p-0"
+                    onClick={() => {
+                      setEditingProduct(product);
+                      setIsDialogOpen(true);
+                    }}
+                  >
                     <Edit className="w-4 h-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     className="w-8 h-8 p-0"
-                    onClick={() => { }}
+                    onClick={() => handleInactivate(product.info.id)}
                   >
                     <Power className={`w-4 h-4 ${IsProductActive(product) ? "text-red-500" : "text-green-500"}`} />
                   </Button>

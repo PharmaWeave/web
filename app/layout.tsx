@@ -7,6 +7,7 @@ import { Suspense } from "react"
 import "./globals.css"
 
 import AuthContextProvider from "@/contexts/auth-context"
+import { Toaster } from "@/components/ui/sonner"
 
 export const metadata: Metadata = {
   title: "v0 App",
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+        <Toaster />
         <Suspense fallback={null}>
           <AuthContextProvider>
             {children}

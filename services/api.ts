@@ -3,7 +3,7 @@ import Toast from "@/utils/toast";
 export const API_URL = "http://localhost:8080";
 
 export interface ApiResponse<T> {
-    data: T[]
+    data: T
 }
 
 const ApiService = {

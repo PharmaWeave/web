@@ -11,13 +11,58 @@ import { StatCard } from "@/components/ui/stat-card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Building2, Users, DollarSign, Plus, Search, MapPin, Edit, Power } from "lucide-react"
-import { useState } from "react"
+import { Building2, DollarSign, Plus, Search, MapPin, Edit, Power } from "lucide-react"
+import { useEffect, useState } from "react"
+import { StatusEnum, StatusType } from "@/@types/status"
+import ApiService from "@/services/api"
+import URLS from "@/services/urls"
+import useAuth from "@/hooks/use-auth"
+import months from "@/utils/months"
+
+interface Branch {
+  id: number;
+  name: string;
+  phone: string;
+
+  brand: {
+    id: number;
+    legal_name: string;
+  },
+
+  address: {
+    id: number;
+    country: string;
+    province: string;
+    city: string;
+    description: string;
+    number: number;
+  },
+
+  managers: Manager[],
+
+  employee_count: number;
+  month_revenue: number;
+
+  createdAt: string;
+  updatedAt: string;
+  status: StatusType;
+}
+
+interface Manager {
+  id: number;
+  name: string;
+  email: string;
+  register: string;
+}
 
 export default function UnitsPage() {
+  const { auth } = useAuth()
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
   const [showActiveOnly, setShowActiveOnly] = useState(true)
+
   const [editingUnit, setEditingUnit] = useState<any>(null)
   const [formData, setFormData] = useState({
     name: "",
@@ -30,88 +75,21 @@ export default function UnitsPage() {
     description: "",
   })
 
-  const [units, setUnits] = useState([
-    {
-      id: 1,
-      name: "Farmácia Centro",
-      address: "Rua das Flores, 123 - Centro",
-      manager: "Carlos Silva",
-      employees: 8,
-      revenue: "R$ 45.000",
-      status: "active",
-      phone: "(11) 3333-4444",
-      country: "Brasil",
-      state: "São Paulo",
-      city: "São Paulo",
-      fullAddress: "Rua das Flores, Centro",
-      number: "123",
-      description: "Unidade principal no centro da cidade",
-    },
-    {
-      id: 2,
-      name: "Farmácia Norte",
-      address: "Av. Paulista, 456 - Norte",
-      manager: "Ana Santos",
-      employees: 12,
-      revenue: "R$ 62.000",
-      status: "active",
-      phone: "(11) 5555-6666",
-      country: "Brasil",
-      state: "São Paulo",
-      city: "São Paulo",
-      fullAddress: "Av. Paulista, Norte",
-      number: "456",
-      description: "Unidade com maior movimento",
-    },
-    {
-      id: 3,
-      name: "Farmácia Sul",
-      address: "Rua do Comércio, 789 - Sul",
-      manager: "João Costa",
-      employees: 6,
-      revenue: "R$ 38.000",
-      status: "active",
-      phone: "(11) 7777-8888",
-      country: "Brasil",
-      state: "São Paulo",
-      city: "São Paulo",
-      fullAddress: "Rua do Comércio, Sul",
-      number: "789",
-      description: "Unidade em região comercial",
-    },
-    {
-      id: 4,
-      name: "Farmácia Oeste",
-      address: "Rua das Palmeiras, 321 - Oeste",
-      manager: "Maria Oliveira",
-      employees: 4,
-      revenue: "R$ 0",
-      status: "inactive",
-      phone: "(11) 9999-0000",
-      country: "Brasil",
-      state: "São Paulo",
-      city: "São Paulo",
-      fullAddress: "Rua das Palmeiras, Oeste",
-      number: "321",
-      description: "Unidade temporariamente fechada para reformas",
-    },
-  ])
+  const [units, setUnits] = useState<Branch[]>([])
 
-  const filteredUnits = showActiveOnly ? units.filter((unit) => unit.status === "active") : units
-  const activeUnits = units.filter((unit) => unit.status === "active").length
-  const totalEmployees = units.reduce((sum, unit) => sum + unit.employees, 0)
-  const totalRevenue = units.reduce(
-    (sum, unit) => sum + Number.parseFloat(unit.revenue.replace("R$ ", "").replace(".", "")),
-    0,
-  )
+  useEffect(() => {
+    ApiService.get(URLS.BRANCH.LIST, {}, auth?.access_token).then((data: { data: Branch[] }) => setUnits(data.data));
+  }, []);
+
+  const filteredUnits = showActiveOnly ? units.filter((unit) => unit.status === StatusEnum.ACTIVE) : units
+  const activeUnits = units.filter((unit) => unit.status === StatusEnum.ACTIVE).length
+
+  const getCompleteAddress = (branch: Branch) => {
+    return `${branch.address.country}, ${branch.address.province}, ${branch.address.city}; ${branch.address.description}, ${branch.address.number}`
+  }
 
   const handleToggleStatus = (unitId: number) => {
-    setUnits((prevUnits) =>
-      prevUnits.map((unit) =>
-        unit.id === unitId ? { ...unit, status: unit.status === "active" ? "inactive" : "active" } : unit,
-      ),
-    )
-    console.log(`[v0] Unidade ${unitId} status alterado`)
+
   }
 
   const handleInputChange = (field: string, value: string) => {
@@ -169,7 +147,6 @@ export default function UnitsPage() {
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Unidades</h1>
@@ -187,7 +164,6 @@ export default function UnitsPage() {
                 <DialogTitle>Criar Nova Unidade</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreateSubmit} className="space-y-4">
-                {/* ... existing form fields ... */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Nome da Unidade</Label>
@@ -280,7 +256,7 @@ export default function UnitsPage() {
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  <Button type="button" variant="ghost" onClick={() => setIsCreateDialogOpen(false)}>
                     Cancelar
                   </Button>
                   <Button type="submit" className="gradient-primary text-white">
@@ -292,21 +268,22 @@ export default function UnitsPage() {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <StatCard title="Total de Unidades" value={units.length.toString()} icon={Building2} />
+        <div className="grid grid-cols-2 gap-6">
           <StatCard title="Unidades Ativas" value={activeUnits.toString()} icon={Building2} />
-          <StatCard title="Total Funcionários" value={totalEmployees.toString()} icon={Users} />
-          <StatCard title="Receita Total" value={`R$ ${totalRevenue.toLocaleString()}`} icon={DollarSign} />
+          <StatCard
+            title={`Receita Mensal (${months[new Date().getMonth()]})`}
+            value={`R$ ${(units.reduce((p, u) => p + u.month_revenue, 0) / 100).toFixed(2)}`}
+            icon={DollarSign}
+          />
         </div>
 
-        {/* Search and Filters */}
         <Card className="gradient-card border-border/50">
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar unidades por nome, endereço ou gerente..."
+                  placeholder="Buscar unidades por nome..."
                   className="pl-10 bg-input border-border"
                 />
               </div>
@@ -333,7 +310,6 @@ export default function UnitsPage() {
               <DialogTitle>Editar Unidade</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-4">
-              {/* ... existing form fields ... */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-name">Nome da Unidade</Label>
@@ -437,19 +413,18 @@ export default function UnitsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Units Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {filteredUnits.map((unit) => (
             <Card
               key={unit.id}
-              className={`gradient-card border-border/50 ${unit.status === "inactive" ? "opacity-60" : ""}`}
+              className={`gradient-card border-border/50 ${unit.status === StatusEnum.INACTIVE ? "opacity-60" : ""}`}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-lg">{unit.name}</CardTitle>
-                    <Badge variant={unit.status === "active" ? "default" : "secondary"} className="mt-1">
-                      {unit.status === "active" ? "Ativa" : "Inativa"}
+                    <Badge variant={unit.status === StatusEnum.ACTIVE ? "default" : "secondary"} className="mt-1">
+                      {unit.status === StatusEnum.ACTIVE ? "Ativa" : "Inativa"}
                     </Badge>
                   </div>
                   <div className="flex gap-1">
@@ -462,7 +437,7 @@ export default function UnitsPage() {
                       className="w-8 h-8 p-0"
                       onClick={() => handleToggleStatus(unit.id)}
                     >
-                      <Power className={`w-4 h-4 ${unit.status === "active" ? "text-red-500" : "text-green-500"}`} />
+                      <Power className={`w-4 h-4 ${unit.status === StatusEnum.ACTIVE ? "text-red-500" : "text-green-500"}`} />
                     </Button>
                   </div>
                 </div>
@@ -470,24 +445,26 @@ export default function UnitsPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-muted-foreground">{unit.address}</p>
+                  <p className="text-sm text-muted-foreground">{getCompleteAddress(unit)}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Gerente:</span>
-                    <span className="text-sm font-medium text-foreground">{unit.manager}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Funcionários:</span>
-                    <span className="text-sm font-medium text-foreground">{unit.employees}</span>
+                  <div className="flex flex-col justify-between">
+                    <span className="text-sm text-muted-foreground">Gerentes:</span>
+                    <ul>
+                      {unit.managers.map(manager => (
+                        <li key={manager.id} className="text-sm font-medium text-foreground">
+                          {manager.name} - ({manager.register})
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Receita Mensal:</span>
                     <span
-                      className={`text-sm font-medium ${unit.status === "active" ? "text-green-500" : "text-gray-400"}`}
+                      className={`text-sm font-medium ${unit.status === StatusEnum.ACTIVE ? "text-green-500" : "text-gray-400"}`}
                     >
-                      {unit.revenue}
+                      R$ {(unit.month_revenue / 100).toFixed(2)}
                     </span>
                   </div>
                 </div>

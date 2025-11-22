@@ -10,12 +10,11 @@ import { Input } from "@/components/ui/input"
 import { StatCard } from "@/components/ui/stat-card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Users, Plus, Search, Mail, Edit, Power } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { StatusEnum, StatusType } from "@/@types/status"
 import { RoleType } from "@/@types/role"
-import ApiService from "@/services/api"
+import ApiService, { ApiResponse } from "@/services/api"
 import URLS from "@/services/urls"
 import useAuth from "@/hooks/use-auth"
 import { formatCPF } from "@/utils/cpf"
@@ -56,7 +55,7 @@ export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([])
 
   useEffect(() => {
-    ApiService.get(URLS.USER.EMPLOYEE.LIST, {}, auth?.access_token).then((data: { data: Employee[] }) => setEmployees(data.data));
+    ApiService.get(URLS.USER.EMPLOYEE.LIST, {}, auth?.access_token).then((data: ApiResponse<Employee[]>) => setEmployees(data.data));
   }, []);
 
   const isEmployeeActive = (employee: Employee) => {
@@ -76,6 +75,8 @@ export default function EmployeesPage() {
       current = current.filter((employee) =>
         normalize(employee.name.toLowerCase()).includes(s)
         || normalize(employee.email.toLowerCase()).includes(s)
+        || employee.register.includes(s)
+        || formatCPF(employee.register).includes(s)
       );
     }
 
@@ -185,7 +186,7 @@ export default function EmployeesPage() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar funcionários por nome ou email..."
+                  placeholder="Buscar funcionários por nome, email ou CPF..."
                   className="pl-10 bg-input border-border"
                   onChange={(e) => setSearch(e.currentTarget.value)}
                 />
