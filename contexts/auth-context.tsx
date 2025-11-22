@@ -19,8 +19,11 @@ export interface Auth {
 export interface AuthContextType {
     auth?: Auth;
     setAuth: (access_token: string) => void;
+
     isLoading: boolean;
     setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+
+    refreshAuth: () => void;
 }
 
 interface AuthContextProviderProps {
@@ -54,7 +57,9 @@ const AuthContextProvider = ({ children, ...props }: AuthContextProviderProps) =
         });
     };
 
-    useEffect(() => {
+    const refreshAuth = () => {
+        setLoading(true)
+
         ApiService.post(URLS.AUTH.REFRESH, {}).then((res: { data: { access_token: string } }) => {
             setAuth(res.data.access_token);
             setLoading(false);
@@ -62,7 +67,9 @@ const AuthContextProvider = ({ children, ...props }: AuthContextProviderProps) =
             setAuth(undefined);
             setLoading(false);
         });
-    }, []);
+    }
+
+    useEffect(() => refreshAuth(), []);
 
     useEffect(() => {
         if (auth?.access_token) {
@@ -84,7 +91,7 @@ const AuthContextProvider = ({ children, ...props }: AuthContextProviderProps) =
     }, [auth]);
 
     return (
-        <AuthContext.Provider value={{ auth, setAuth, isLoading, setLoading }}>
+        <AuthContext.Provider value={{ auth, setAuth, isLoading, setLoading, refreshAuth }}>
             {children}
         </AuthContext.Provider>
     );

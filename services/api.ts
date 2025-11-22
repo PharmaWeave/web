@@ -15,6 +15,11 @@ const ApiService = {
             }
         });
         if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/"
+                throw new Error("Session expired. Login again!")
+            }
+
             await this.error(response);
             throw new Error(`Failed to fetch data: ${response.status}`);
         }
@@ -32,6 +37,11 @@ const ApiService = {
             body: JSON.stringify(data),
         });
         if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/"
+                throw new Error("Session expired. Login again!")
+            }
+
             await this.error(response);
             throw new Error(`Failed to create resource: ${response.status}`);
         }
@@ -49,6 +59,11 @@ const ApiService = {
             body: JSON.stringify(data),
         });
         if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/"
+                throw new Error("Session expired. Login again!")
+            }
+
             await this.error(response);
             throw new Error(`Failed to update resource: ${response.status}`);
         }
@@ -66,6 +81,11 @@ const ApiService = {
             body: JSON.stringify(data),
         });
         if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/"
+                throw new Error("Session expired. Login again!")
+            }
+
             await this.error(response);
             throw new Error(`Failed to partially update resource: ${response.status}`);
         }
@@ -80,6 +100,11 @@ const ApiService = {
             },
         });
         if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/"
+                throw new Error("Session expired. Login again!")
+            }
+
             await this.error(response);
             throw new Error(`Failed to delete resource: ${response.status}`);
         }

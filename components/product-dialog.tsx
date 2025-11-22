@@ -18,7 +18,10 @@ export interface ProductForm {
 interface ProductDialogProps {
     isDialogOpen: boolean;
     setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+
     handleSubmit: (e: React.FormEvent, form: ProductForm, editingProduct?: Product) => void;
+
+    setEditingProduct: React.Dispatch<React.SetStateAction<Product | undefined>>;
     editingProduct?: Product;
 }
 
@@ -26,6 +29,7 @@ export default function ProductDialog({
     isDialogOpen,
     setIsDialogOpen,
     handleSubmit,
+    setEditingProduct,
     editingProduct
 }: ProductDialogProps) {
     const defaultForm = {
@@ -78,7 +82,10 @@ export default function ProductDialog({
     };
 
     return (
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setEditingProduct(undefined)
+            setIsDialogOpen(open)
+        }}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>{editingProduct ? "Editar Produto" : "Novo Produto"}</DialogTitle>
@@ -133,7 +140,10 @@ export default function ProductDialog({
                         />
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)}>
+                        <Button type="button" variant="ghost" onClick={() => {
+                            setEditingProduct(undefined)
+                            setIsDialogOpen(false)
+                        }}>
                             Cancelar
                         </Button>
                         <Button type="submit" className="gradient-primary text-white">

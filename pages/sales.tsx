@@ -7,12 +7,14 @@ import { StatCard } from "@/components/ui/stat-card"
 import { ShoppingCart, Plus, DollarSign, ChevronLeft, ChevronRight } from "lucide-react"
 import { useEffect, useState } from "react"
 import { StatusType } from "@/@types/status"
-import ApiService from "@/services/api"
+import ApiService, { ApiResponse } from "@/services/api"
 import useAuth from "@/hooks/use-auth"
 import URLS from "@/services/urls"
 import { formatCPF } from "@/utils/cpf"
+import SaleDialog, { SaleForm } from "@/components/sale-dialog"
+import Toast from "@/utils/toast"
 
-interface Sale {
+export interface Sale {
     sale_id: number;
     sale_total_amount: number;
     sale_total_items: number;
@@ -53,6 +55,8 @@ export default function SalesPage() {
     const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, total: 0, total_pages: 1 })
     const [loading, setLoading] = useState(false)
 
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+
     const fetchSales = async (page: number) => {
         if (!auth) return
         setLoading(true)
@@ -79,6 +83,27 @@ export default function SalesPage() {
         if (pagination.page < pagination.total_pages) fetchSales(pagination.page + 1)
     }
 
+    const handleSubmit = (e: React.FormEvent, form: SaleForm): Promise<boolean> => {
+        e.preventDefault()
+
+        if (!form.user_id || !form.sale_items.length) return Promise.resolve(false);
+
+        const body: SaleForm = {
+            user_id: form.user_id,
+            sale_items: form.sale_items,
+            promotion_id: form.promotion_id
+        }
+
+        ApiService.post(URLS.SALE.POST, body, auth?.access_token).then(() => {
+            fetchSales(pagination.page)
+            setIsDialogOpen(false)
+
+            Toast.success("Compra registrada!")
+        })
+
+        return Promise.resolve(true)
+    }
+
     return (
         <DashboardLayout>
             <div className="p-6 space-y-6">
@@ -87,10 +112,16 @@ export default function SalesPage() {
                         <h1 className="text-3xl font-bold text-foreground">Vendas</h1>
                         <p className="text-muted-foreground">Gerencie as vendas da farmácia</p>
                     </div>
-                    <Button className="gradient-primary text-white">
+                    <Button className="gradient-primary text-white" onClick={() => setIsDialogOpen(true)}>
                         <Plus className="w-4 h-4 mr-2" />
                         Nova Venda
                     </Button>
+
+                    <SaleDialog
+                        isDialogOpen={isDialogOpen}
+                        setIsDialogOpen={setIsDialogOpen}
+                        handleSubmit={handleSubmit}
+                    />
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">

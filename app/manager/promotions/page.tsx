@@ -14,7 +14,7 @@ import URLS from "@/services/urls"
 import ApiService from "@/services/api"
 import normalize from "@/utils/nomalize"
 
-interface Promotion {
+export interface Promotion {
   id: number;
   title: string;
   description: string;

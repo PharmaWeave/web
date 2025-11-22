@@ -148,6 +148,7 @@ export default function ProductsPage() {
             isDialogOpen={isDialogOpen}
             setIsDialogOpen={setIsDialogOpen}
             handleSubmit={handleSubmit}
+            setEditingProduct={setEditingProduct}
             editingProduct={editingProduct}
           />
         </div>

@@ -9,6 +9,7 @@ const URLS = {
         LIST: "promotion"
     },
     SALE: {
+        POST: "sale",
         LIST: (page: number, limit: number) => `sale?page=${page}&limit=${limit}`,
         USER: {
             METRICS: "sale/user/metrics"
