@@ -43,7 +43,7 @@ export default function ComboBox<T>({
         let string = ""
 
         for (let key of displayKeys) {
-            if (key === "user_register") {
+            if (key.toString().includes("register")) {
                 string += formatCPF(selected[key] as string) + " - "
             }
             else string += selected[key] as string + " - "

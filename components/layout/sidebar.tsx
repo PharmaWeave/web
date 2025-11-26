@@ -38,6 +38,7 @@ export function Sidebar() {
       return [
         ...baseItems,
         { href: "/admin/units", label: "Unidades", icon: Building2 },
+        { href: "/admin/employees", label: "Funcionários", icon: Users },
         { href: "/admin/managers", label: "Gerentes", icon: UserCheck }
       ]
     }

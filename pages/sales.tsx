@@ -83,7 +83,7 @@ export default function SalesPage() {
         if (pagination.page < pagination.total_pages) fetchSales(pagination.page + 1)
     }
 
-    const handleSubmit = (e: React.FormEvent, form: SaleForm): Promise<boolean> => {
+    const handleSubmit = async (e: React.FormEvent, form: SaleForm): Promise<boolean> => {
         e.preventDefault()
 
         if (!form.user_id || !form.sale_items.length) return Promise.resolve(false);
@@ -94,14 +94,18 @@ export default function SalesPage() {
             promotion_id: form.promotion_id
         }
 
-        ApiService.post(URLS.SALE.POST, body, auth?.access_token).then(() => {
-            fetchSales(pagination.page)
-            setIsDialogOpen(false)
+        return ApiService.post(URLS.SALE.POST, body, auth?.access_token)
+            .then(() => {
+                fetchSales(pagination.page)
+                setIsDialogOpen(false)
 
-            Toast.success("Compra registrada!")
-        })
+                Toast.success("Compra registrada!")
 
-        return Promise.resolve(true)
+                return true
+            })
+            .catch(() => {
+                return false
+            })
     }
 
     return (

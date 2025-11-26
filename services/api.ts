@@ -40,6 +40,8 @@ const ApiService = {
             if (response.status === 401) {
                 window.location.href = "/"
                 throw new Error("Session expired. Login again!")
+            } else if (endpoint.includes("auth/refresh")) {
+                throw new Error("It was not possible to auto-login!")
             }
 
             await this.error(response);
@@ -114,7 +116,11 @@ const ApiService = {
     async error(response: Response) {
         const errors = await response.json();
 
-        Toast.error(JSON.stringify(errors));
+        if (typeof errors.error === "object") {
+            for (let obj of errors.error) {
+                Toast.error(obj.message)
+            }
+        } else Toast.error(errors.error);
     }
 };
 

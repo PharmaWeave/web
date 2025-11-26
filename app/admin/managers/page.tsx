@@ -4,7 +4,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Building2, TrendingUp, Search, Mail, Edit, CheckCircle2Icon, IdCardIcon } from "lucide-react"
+import { Building2, TrendingUp, Search, Mail, IdCardIcon, TrendingDown } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { StatusType } from "@/@types/status"
 import ApiService from "@/services/api"
@@ -12,8 +12,11 @@ import URLS from "@/services/urls"
 import useAuth from "@/hooks/use-auth"
 import normalize from "@/utils/nomalize"
 import { formatCPF } from "@/utils/cpf"
+import ManagerDialog, { ManagerForm } from "@/components/manager-dialog"
+import Toast from "@/utils/toast"
+import { RoleEnum } from "@/@types/role"
 
-interface Manager {
+export interface Manager {
   id: number;
   name: string;
   email: string;
@@ -34,11 +37,16 @@ export default function ManagersPage() {
   const { auth } = useAuth()
 
   const [managers, setManagers] = useState<Manager[]>([])
-
   const [search, setSearch] = useState("")
 
-  useEffect(() => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  const fetchManagers = () => {
     ApiService.get(URLS.USER.MANAGER.LIST, {}, auth?.access_token).then((data: { data: Manager[] }) => setManagers(data.data));
+  }
+
+  useEffect(() => {
+    fetchManagers()
   }, []);
 
   const filteredManagers = useMemo(() => {
@@ -58,6 +66,27 @@ export default function ManagersPage() {
     return current;
   }, [search, managers]);
 
+  const handleSubmit = (e: React.FormEvent, form: ManagerForm) => {
+    e.preventDefault()
+
+    const api = form.role === RoleEnum.EMPLOYEE
+      ? ApiService.patch(URLS.USER.EMPLOYEE.PROMOTE(form.employee_id), {}, auth?.access_token)
+      : ApiService.patch(URLS.USER.EMPLOYEE.DEMOTE(form.employee_id), {}, auth?.access_token)
+
+    return api.then(() => {
+      fetchManagers()
+
+      if (form.role === RoleEnum.EMPLOYEE) Toast.success("Funcionário promovido!")
+      else Toast.success("Gerente tronou-se apenas funcionário!")
+
+      setIsDialogOpen(false)
+      return true
+    })
+      .catch(() => {
+        return false
+      })
+  }
+
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
@@ -66,10 +95,16 @@ export default function ManagersPage() {
             <h1 className="text-3xl font-bold text-foreground">Gerentes</h1>
             <p className="text-muted-foreground">Gerencie os gerentes das unidades</p>
           </div>
-          <Button className="gradient-primary text-white">
+          <Button className="gradient-primary text-white" onClick={() => setIsDialogOpen(true)}>
             <TrendingUp className="w-4 h-4 mr-2" />
             Promover Funcionário
           </Button>
+
+          <ManagerDialog
+            isDialogOpen={isDialogOpen}
+            setIsDialogOpen={setIsDialogOpen}
+            handleSubmit={handleSubmit}
+          />
         </div>
 
         <Card className="gradient-card border-border/50">
@@ -92,11 +127,16 @@ export default function ManagersPage() {
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg">{manager.name}</CardTitle>
                   <div className="flex gap-1">
-                    <Button size="sm" variant="ghost" className="w-8 h-8 p-0">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="w-8 h-8 p-0 text-destructive">
-                      <CheckCircle2Icon className="w-4 h-4" />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="w-8 h-8 p-0 text-destructive"
+                      onClick={(e) => handleSubmit(e, {
+                        employee_id: manager.id,
+                        role: manager.role
+                      })}
+                    >
+                      <TrendingDown className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>

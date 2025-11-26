@@ -14,12 +14,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { Building2, DollarSign, Plus, Search, MapPin, Edit, Power } from "lucide-react"
 import { useEffect, useState } from "react"
 import { StatusEnum, StatusType } from "@/@types/status"
-import ApiService from "@/services/api"
+import ApiService, { ApiResponse } from "@/services/api"
 import URLS from "@/services/urls"
 import useAuth from "@/hooks/use-auth"
 import months from "@/utils/months"
+import Toast from "@/utils/toast"
+import BranchDialog, { BranchForm } from "@/components/unit-dialog"
 
-interface Branch {
+export interface Branch {
   id: number;
   name: string;
   phone: string;
@@ -58,27 +60,20 @@ interface Manager {
 export default function UnitsPage() {
   const { auth } = useAuth()
 
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const [showActiveOnly, setShowActiveOnly] = useState(true)
 
-  const [editingUnit, setEditingUnit] = useState<any>(null)
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    country: "",
-    state: "",
-    city: "",
-    address: "",
-    number: "",
-    description: "",
-  })
+  const [editingBranch, setEditingBranch] = useState<Branch | undefined>()
 
   const [units, setUnits] = useState<Branch[]>([])
 
-  useEffect(() => {
+  const fetchBranches = () => {
     ApiService.get(URLS.BRANCH.LIST, {}, auth?.access_token).then((data: { data: Branch[] }) => setUnits(data.data));
+  }
+
+  useEffect(() => {
+    fetchBranches()
   }, []);
 
   const filteredUnits = showActiveOnly ? units.filter((unit) => unit.status === StatusEnum.ACTIVE) : units
@@ -89,183 +84,64 @@ export default function UnitsPage() {
   }
 
   const handleToggleStatus = (unitId: number) => {
+    ApiService.patch(URLS.BRANCH.STATUS(unitId), {}, auth?.access_token)
+      .then((data: ApiResponse<Branch>) => {
+        fetchBranches()
 
+        Toast.success(`Unidade ${data.data.status === StatusEnum.ACTIVE ? "ativada" : "desativada"}!`)
+      })
   }
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handleCreateSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, form: BranchForm): Promise<boolean> => {
     e.preventDefault()
-    console.log("[v0] Nova unidade criada:", formData)
-    setIsCreateDialogOpen(false)
-    setFormData({
-      name: "",
-      phone: "",
-      country: "",
-      state: "",
-      city: "",
-      address: "",
-      number: "",
-      description: "",
-    })
-  }
 
-  const handleEditClick = (unit: any) => {
-    setEditingUnit(unit)
-    setFormData({
-      name: unit.name,
-      phone: unit.phone,
-      country: unit.country,
-      state: unit.state,
-      city: unit.city,
-      address: unit.fullAddress,
-      number: unit.number,
-      description: unit.description,
-    })
-    setIsEditDialogOpen(true)
-  }
+    const body: BranchForm = {
+      ...form,
+      address: {
+        ...form.address,
+        number: Number(form.address.number)
+      },
+      ...(form.phone && form.phone.trim().length > 0 && {
+        phone: form.phone.trim()
+      })
+    }
 
-  const handleEditSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("[v0] Unidade editada:", { id: editingUnit.id, ...formData })
-    setIsEditDialogOpen(false)
-    setEditingUnit(null)
-    setFormData({
-      name: "",
-      phone: "",
-      country: "",
-      state: "",
-      city: "",
-      address: "",
-      number: "",
-      description: "",
+    const api = editingBranch
+      ? ApiService.patch(URLS.BRANCH.UPDATE(editingBranch.id), body, auth?.access_token)
+      : ApiService.post(URLS.BRANCH.POST, body, auth?.access_token)
+
+    return api.then(() => {
+      fetchBranches()
+
+      Toast.success("Unidade criada!")
+
+      setIsDialogOpen(false)
+      return true
+    }).catch(() => {
+      return false
     })
   }
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="flex flex-col p-6 h-full space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Unidades</h1>
             <p className="text-muted-foreground">Gerencie as unidades da rede</p>
           </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gradient-primary text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Unidade
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Criar Nova Unidade</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreateSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome da Unidade</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
-                      placeholder="Ex: Farmácia Centro"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Telefone</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                      placeholder="(11) 99999-9999"
-                      required
-                    />
-                  </div>
-                </div>
+          <Button className="gradient-primary text-white" onClick={() => setIsDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Unidade
+          </Button>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="country">País</Label>
-                    <Input
-                      id="country"
-                      value={formData.country}
-                      onChange={(e) => handleInputChange("country", e.target.value)}
-                      placeholder="Brasil"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">Estado</Label>
-                    <Input
-                      id="state"
-                      value={formData.state}
-                      onChange={(e) => handleInputChange("state", e.target.value)}
-                      placeholder="São Paulo"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="city">Cidade</Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => handleInputChange("city", e.target.value)}
-                    placeholder="São Paulo"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="address">Endereço (Rua + Bairro)</Label>
-                    <Input
-                      id="address"
-                      value={formData.address}
-                      onChange={(e) => handleInputChange("address", e.target.value)}
-                      placeholder="Rua das Flores, Centro"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="number">Número</Label>
-                    <Input
-                      id="number"
-                      value={formData.number}
-                      onChange={(e) => handleInputChange("number", e.target.value)}
-                      placeholder="123"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição (Extra)</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => handleInputChange("description", e.target.value)}
-                    placeholder="Informações adicionais sobre a unidade..."
-                    rows={3}
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button type="button" variant="ghost" onClick={() => setIsCreateDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" className="gradient-primary text-white">
-                    Criar Unidade
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <BranchDialog
+            isDialogOpen={isDialogOpen}
+            setIsDialogOpen={setIsDialogOpen}
+            handleSubmit={handleSubmit}
+            setEditingBranch={setEditingBranch}
+            editingBranch={editingBranch}
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-6">
@@ -304,116 +180,7 @@ export default function UnitsPage() {
           </CardContent>
         </Card>
 
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Editar Unidade</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleEditSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-name">Nome da Unidade</Label>
-                  <Input
-                    id="edit-name"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    placeholder="Ex: Farmácia Centro"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-phone">Telefone</Label>
-                  <Input
-                    id="edit-phone"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                    placeholder="(11) 99999-9999"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-country">País</Label>
-                  <Input
-                    id="edit-country"
-                    value={formData.country}
-                    onChange={(e) => handleInputChange("country", e.target.value)}
-                    placeholder="Brasil"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-state">Estado</Label>
-                  <Input
-                    id="edit-state"
-                    value={formData.state}
-                    onChange={(e) => handleInputChange("state", e.target.value)}
-                    placeholder="São Paulo"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-city">Cidade</Label>
-                <Input
-                  id="edit-city"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange("city", e.target.value)}
-                  placeholder="São Paulo"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2 space-y-2">
-                  <Label htmlFor="edit-address">Endereço (Rua + Bairro)</Label>
-                  <Input
-                    id="edit-address"
-                    value={formData.address}
-                    onChange={(e) => handleInputChange("address", e.target.value)}
-                    placeholder="Rua das Flores, Centro"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-number">Número</Label>
-                  <Input
-                    id="edit-number"
-                    value={formData.number}
-                    onChange={(e) => handleInputChange("number", e.target.value)}
-                    placeholder="123"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">Descrição (Extra)</Label>
-                <Textarea
-                  id="edit-description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange("description", e.target.value)}
-                  placeholder="Informações adicionais sobre a unidade..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" className="gradient-primary text-white">
-                  Salvar Alterações
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-y-auto">
           {filteredUnits.map((unit) => (
             <Card
               key={unit.id}
@@ -428,7 +195,10 @@ export default function UnitsPage() {
                     </Badge>
                   </div>
                   <div className="flex gap-1">
-                    <Button size="sm" variant="ghost" className="w-8 h-8 p-0" onClick={() => handleEditClick(unit)}>
+                    <Button size="sm" variant="ghost" className="w-8 h-8 p-0" onClick={() => {
+                      setEditingBranch(unit)
+                      setIsDialogOpen(true)
+                    }}>
                       <Edit className="w-4 h-4" />
                     </Button>
                     <Button

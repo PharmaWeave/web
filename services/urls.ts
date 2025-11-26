@@ -6,7 +6,10 @@ const URLS = {
         UPDATE: (product_id: number) => `product/${product_id}`
     },
     PROMOTION: {
-        LIST: "promotion"
+        LIST: "promotion",
+        POST: "promotion",
+        DELETE: (promotion_id: number) => `promotion/${promotion_id}`,
+        FINALIZE: (promotion_id: number) => `promotion/${promotion_id}/finalize`,
     },
     SALE: {
         POST: "sale",
@@ -16,7 +19,10 @@ const URLS = {
         }
     },
     BRANCH: {
-        LIST: "branch"
+        LIST: "branch",
+        POST: "branch",
+        STATUS: (branch_id: number) => `branch/status/${branch_id}`,
+        UPDATE: (branch_id: number) => `branch/${branch_id}`
     },
     USER: {
         CUSTOMER: {
@@ -26,7 +32,12 @@ const URLS = {
             UPDATE: (user_id: number) => `user/${user_id}`
         },
         EMPLOYEE: {
-            LIST: "user/employee"
+            LIST: "user/employee",
+            POST: "user/employee",
+            STATUS: (employee_id: number) => `user/employee/status/${employee_id}`,
+            UPDATE: (employee_id: number) => `user/employee/${employee_id}`,
+            PROMOTE: (employee_id: number) => `user/employee/promote/${employee_id}`,
+            DEMOTE: (employee_id: number) => `user/employee/demote/${employee_id}`
         },
         MANAGER: {
             LIST: "user/employee?role=M"

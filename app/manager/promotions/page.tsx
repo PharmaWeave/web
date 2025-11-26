@@ -13,6 +13,8 @@ import useAuth from "@/hooks/use-auth"
 import URLS from "@/services/urls"
 import ApiService from "@/services/api"
 import normalize from "@/utils/nomalize"
+import PromotionDialog, { PromotionForm } from "@/components/promotion-dialog"
+import Toast from "@/utils/toast"
 
 export interface Promotion {
   id: number;
@@ -69,12 +71,20 @@ interface Product {
 export default function PromotionsPage() {
   const { auth } = useAuth()
 
+  const [editingPromotion, setEditingPromotion] = useState<Promotion | undefined>()
+
   const [promotions, setPromotions] = useState<Promotion[]>([])
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("")
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  const fetchPromotions = () => {
+    ApiService.get(URLS.PROMOTION.LIST, {}, auth?.access_token).then((data: { data: Promotion[] }) => setPromotions(data.data));
+  }
 
   useEffect(() => {
-    ApiService.get(URLS.PROMOTION.LIST, {}, auth?.access_token).then((data: { data: Promotion[] }) => setPromotions(data.data));
+    fetchPromotions()
   }, []);
 
   const IsPromotionActive = (promotion: Promotion) => {
@@ -104,21 +114,66 @@ export default function PromotionsPage() {
   }, [search, promotions]);
 
   const handleDelete = (promotionId: number) => {
+    ApiService.delete(URLS.PROMOTION.DELETE(promotionId), auth?.access_token)
+      .then(() => {
+        fetchPromotions()
+      })
+  }
 
+  const handleFinalize = (promotionId: number) => {
+    ApiService.patch(URLS.PROMOTION.FINALIZE(promotionId), {}, auth?.access_token)
+      .then(() => {
+        fetchPromotions()
+      })
+  }
+
+  const handleSubmit = (e: React.FormEvent, form: PromotionForm) => {
+    e.preventDefault()
+
+    const value = form.type === "V" ? form.value * 100 : form.value
+    const constraint = form.type === "V" ? form.constraint * 100 : form.constraint
+    const start = new Date(form.start).toISOString()
+    const end = new Date(form.end).toISOString()
+
+    const body = {
+      ...form,
+      value: value,
+      constraint: constraint,
+      branch_id: auth?.branch_id,
+      start: start,
+      end: end,
+    }
+
+    const api = ApiService.post(URLS.PROMOTION.POST, body, auth?.access_token)
+
+    api.then(() => {
+      fetchPromotions()
+
+      setIsDialogOpen(false)
+      Toast.success("Promoção criada!")
+    }).finally(() => setEditingPromotion(undefined))
   }
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="flex flex-col p-6 h-full space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Promoções</h1>
             <p className="text-muted-foreground">Crie e gerencie promoções e ofertas</p>
           </div>
-          <Button className="gradient-primary text-white">
+          <Button className="gradient-primary text-white" onClick={() => setIsDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Nova Promoção
           </Button>
+
+          <PromotionDialog
+            isDialogOpen={isDialogOpen}
+            setIsDialogOpen={setIsDialogOpen}
+            handleSubmit={handleSubmit}
+            setEditingPromotion={setEditingPromotion}
+            editingPromotion={editingPromotion}
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-6">
@@ -139,7 +194,7 @@ export default function PromotionsPage() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-y-auto">
           {filteredPromotions.map((promotion) => (
             <Card key={promotion.id} className="gradient-card border-border/50">
               <CardHeader className="pb-3">
@@ -158,25 +213,23 @@ export default function PromotionsPage() {
                   </div>
                   <div className="flex gap-1">
                     {IsPromotionActive(promotion) >= 0 && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="w-8 h-8 p-0"
-                          onClick={() => handleDelete(promotion.id)}
-                        >
-                          <CheckCircle2Icon className="w-4 h-4 text-green-500" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="w-8 h-8 p-0"
-                          onClick={() => handleDelete(promotion.id)}
-                        >
-                          <Trash2Icon className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="w-8 h-8 p-0"
+                        onClick={() => handleFinalize(promotion.id)}
+                      >
+                        <CheckCircle2Icon className="w-4 h-4 text-green-500" />
+                      </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="w-8 h-8 p-0"
+                      onClick={() => handleDelete(promotion.id)}
+                    >
+                      <Trash2Icon className="w-4 h-4 text-red-500" />
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
@@ -185,12 +238,14 @@ export default function PromotionsPage() {
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Desconto:</span>
                     <span className="text-sm font-medium text-blue-500">
-                      {promotion.type !== "P" && "R$"} {promotion.value} {promotion.type === "P" && "%"}
+                      {promotion.type !== "P" && "R$"} {promotion.type === "V" ? (promotion.value / 100).toFixed(2) : promotion.value}{promotion.type === "P" && "%"}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Compra mín:</span>
-                    <span className="text-sm font-medium text-foreground">R$ {(promotion.constraint / 100).toFixed(2)}</span>
+                    <span className="text-sm text-muted-foreground">{promotion.type === "V" ? "Compra mín:" : "Usos por compra:"}</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {promotion.type === "V" && "R$"} {promotion.type === "V" ? (promotion.constraint / 100).toFixed(2) : promotion.constraint}
+                    </span>
                   </div>
                 </div>
 

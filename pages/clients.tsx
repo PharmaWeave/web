@@ -206,7 +206,8 @@ export default function ClientsPage() {
                                             </td>
                                             <td className="p-3">
                                                 <div className="flex gap-1">
-                                                    {(auth?.role === RoleEnum.EMPLOYEE && client.user_role !== RoleEnum.MANAGER)
+                                                    {((auth?.role === RoleEnum.EMPLOYEE && client.user_role !== RoleEnum.MANAGER)
+                                                        || (auth?.role === RoleEnum.MANAGER && auth.role !== client.user_role))
                                                         && (
                                                             <Button size="sm" variant="ghost"
                                                                 className="w-8 h-8 p-0"
@@ -218,20 +219,18 @@ export default function ClientsPage() {
                                                                 <Edit className="w-4 h-4 text-muted-foreground" />
                                                             </Button>
                                                         )}
-                                                    {((auth?.role === RoleEnum.EMPLOYEE && client.user_role === RoleEnum.USER)
-                                                        || (auth?.role === RoleEnum.MANAGER))
-                                                        && (
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="w-8 h-8 p-0"
-                                                                onClick={() => handleInactivate(client.user_id)}
-                                                            >
-                                                                <Power
-                                                                    className={`w-4 h-4 ${isCustomerActive(client) ? "text-red-500" : "text-green-500"}`}
-                                                                />
-                                                            </Button>
-                                                        )}
+                                                    {(client.user_role === RoleEnum.USER) && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="w-8 h-8 p-0"
+                                                            onClick={() => handleInactivate(client.user_id)}
+                                                        >
+                                                            <Power
+                                                                className={`w-4 h-4 ${isCustomerActive(client) ? "text-red-500" : "text-green-500"}`}
+                                                            />
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
