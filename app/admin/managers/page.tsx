@@ -12,7 +12,7 @@ import URLS from "@/services/urls"
 import useAuth from "@/hooks/use-auth"
 import normalize from "@/utils/nomalize"
 import { formatCPF } from "@/utils/cpf"
-import ManagerDialog, { ManagerForm } from "@/components/manager-dialog"
+import ManagerDialog, { ManagerForm } from "@/components/dialog/manager-dialog"
 import Toast from "@/utils/toast"
 import { RoleEnum } from "@/@types/role"
 

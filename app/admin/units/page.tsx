@@ -19,7 +19,7 @@ import URLS from "@/services/urls"
 import useAuth from "@/hooks/use-auth"
 import months from "@/utils/months"
 import Toast from "@/utils/toast"
-import BranchDialog, { BranchForm } from "@/components/unit-dialog"
+import BranchDialog, { BranchForm } from "@/components/dialog/unit-dialog"
 
 export interface Branch {
   id: number;

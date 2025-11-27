@@ -8,7 +8,7 @@ import { Employee } from "@/pages/employees";
 import ApiService, { ApiResponse } from "@/services/api";
 import URLS from "@/services/urls";
 import useAuth from "@/hooks/use-auth";
-import ComboBox from "./combobox";
+import ComboBox from "../ui/combobox";
 import { RoleEnum, RoleType } from "@/@types/role";
 import { StatusEnum } from "@/@types/status";
 

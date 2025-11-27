@@ -13,7 +13,7 @@ import useAuth from "@/hooks/use-auth"
 import URLS from "@/services/urls"
 import ApiService from "@/services/api"
 import normalize from "@/utils/nomalize"
-import PromotionDialog, { PromotionForm } from "@/components/promotion-dialog"
+import PromotionDialog, { PromotionForm } from "@/components/dialog/promotion-dialog"
 import Toast from "@/utils/toast"
 
 export interface Promotion {

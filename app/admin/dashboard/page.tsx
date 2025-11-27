@@ -1,29 +1,34 @@
+"use client"
+
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { StatCard } from "@/components/ui/stat-card"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, DollarSign, Clock } from "lucide-react"
+import useAuth from "@/hooks/use-auth"
+import ApiService, { ApiResponse } from "@/services/api"
+import URLS from "@/services/urls"
+import { Building2, DollarSign } from "lucide-react"
+import { useEffect, useState } from "react"
+
+interface AdminMetrics {
+  branch_count: number;
+  month_revenue: number;
+  growth_percentage: number;
+}
 
 export default function AdminDashboard() {
-  const recentActivities = [
-    {
-      id: 1,
-      title: 'Nova unidade "Farmácia Centro" cadastrada',
-      time: "Há 2 horas",
-      type: "success",
-    },
-    {
-      id: 2,
-      title: "Unidade São Paulo - Norte ativada",
-      time: "Há 4 horas",
-      type: "info",
-    },
-    {
-      id: 3,
-      title: "Novo gerente atribuído à unidade Norte",
-      time: "Há 6 horas",
-      type: "info",
-    },
-  ]
+  const { auth } = useAuth()
+
+  const [metrics, setMetrics] = useState<AdminMetrics>({
+    branch_count: 0,
+    month_revenue: 0,
+    growth_percentage: 0
+  })
+
+  useEffect(() => {
+    ApiService.get(URLS.METRICS.RETRIEVE, {}, auth?.access_token)
+      .then((data: ApiResponse<AdminMetrics>) => {
+        setMetrics(data.data)
+      })
+  }, [])
 
   return (
     <DashboardLayout>
@@ -36,45 +41,15 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 gap-6">
           <StatCard
             title="Unidades Totais"
-            value="23"
-            subtitle="+2 este mês"
+            value={metrics.branch_count}
             icon={Building2}
           />
           <StatCard
-            title="Receita da Rede"
-            value="R$ 2.4M"
-            subtitle="+15% vs mês anterior"
+            title="Receita Mensal Total"
+            value={"R$ " + (metrics.month_revenue / 100).toFixed(2)}
+            subtitle={(metrics.growth_percentage > 0 ? "+" : "") + metrics.growth_percentage + "% vs mês anterior"}
             icon={DollarSign}
           />
-        </div>
-
-        <div className="grid grid-cols-1 gap-6">
-          <Card className="gradient-card border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Atividades Recentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
-                  <div
-                    className={`w-2 h-2 rounded-full mt-2 ${activity.type === "success"
-                      ? "bg-green-500"
-                      : activity.type === "info"
-                        ? "bg-blue-500"
-                        : "bg-yellow-500"
-                      }`}
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{activity.title}</p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
         </div>
       </div>
     </DashboardLayout>

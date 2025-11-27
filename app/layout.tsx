@@ -7,6 +7,7 @@ import { Suspense } from "react"
 import "./globals.css"
 
 import AuthContextProvider from "@/contexts/auth-context"
+import AuthGuard from "@/components/auth/auth-guard"
 import { Toaster } from "@/components/ui/sonner"
 
 export const metadata: Metadata = {
@@ -21,12 +22,14 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <Toaster />
-        <Suspense fallback={null}>
+        <Suspense fallback={<AuthGuard />}>
           <AuthContextProvider>
-            {children}
+            <AuthGuard>
+              {children}
+            </AuthGuard>
           </AuthContextProvider>
         </Suspense>
         <Analytics />

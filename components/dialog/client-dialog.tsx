@@ -7,7 +7,7 @@ import { Label } from "@radix-ui/react-label"
 import React, { useState } from "react";
 import { useEffect } from "react"
 import { Customer } from "@/pages/clients"
-import CPFInput from "./cpf-input"
+import CPFInput from "../cpf-input"
 
 export interface ClientForm {
     register: string;

@@ -14,6 +14,8 @@ const ApiService = {
                 'Authorization': `Bearer ${access_token}`
             }
         });
+        if (response.status === 204) return {}
+
         if (!response.ok) {
             if (response.status === 401) {
                 window.location.href = "/"
@@ -36,6 +38,8 @@ const ApiService = {
             credentials: 'include',
             body: JSON.stringify(data),
         });
+        if (response.status === 204) return {}
+
         if (!response.ok) {
             if (response.status === 401) {
                 window.location.href = "/"
@@ -60,6 +64,8 @@ const ApiService = {
             credentials: 'include',
             body: JSON.stringify(data),
         });
+        if (response.status === 204) return {}
+
         if (!response.ok) {
             if (response.status === 401) {
                 window.location.href = "/"
@@ -82,6 +88,8 @@ const ApiService = {
             credentials: 'include',
             body: JSON.stringify(data),
         });
+        if (response.status === 204) return {}
+
         if (!response.ok) {
             if (response.status === 401) {
                 window.location.href = "/"
@@ -101,6 +109,8 @@ const ApiService = {
                 'Authorization': `Bearer ${access_token}`
             },
         });
+        if (response.status === 204) return {}
+
         if (!response.ok) {
             if (response.status === 401) {
                 window.location.href = "/"

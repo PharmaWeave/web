@@ -20,7 +20,7 @@ import useAuth from "@/hooks/use-auth"
 import { formatCPF } from "@/utils/cpf"
 import normalize from "@/utils/nomalize"
 import { cn } from "@/lib/utils"
-import ComboBox from "@/components/combobox"
+import ComboBox from "@/components/ui/combobox"
 import { Branch } from "@/app/admin/units/page"
 import Toast from "@/utils/toast"
 

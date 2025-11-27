@@ -13,7 +13,7 @@ import URLS from "@/services/urls"
 import { Button } from "@/components/ui/button"
 import normalize from "@/utils/nomalize"
 import useAuth from "@/hooks/use-auth"
-import ProductDialog, { ProductForm } from "@/components/product-dialog"
+import ProductDialog, { ProductForm } from "@/components/dialog/product-dialog"
 import Toast from "@/utils/toast"
 
 export interface Product {

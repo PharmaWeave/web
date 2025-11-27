@@ -10,7 +10,7 @@ import { Product } from "@/pages/products"
 import ApiService, { ApiResponse } from "@/services/api"
 import URLS from "@/services/urls"
 import useAuth from "@/hooks/use-auth"
-import ComboBox from "./combobox"
+import ComboBox from "../ui/combobox"
 import { StatusEnum } from "@/@types/status"
 
 export interface PromotionForm {

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
@@ -13,17 +13,19 @@ import {
   UserCheck,
   Tag,
   ShoppingCart,
-  Settings,
   LogOut,
   User,
 } from "lucide-react"
 import { RoleEnum } from "@/@types/role"
 import useAuth from "@/hooks/use-auth"
+import ApiService from "@/services/api"
+import URLS from "@/services/urls"
 
 export function Sidebar() {
   const { auth } = useAuth();
 
   const pathname = usePathname()
+  const router = useRouter()
 
   const getNavItems = () => {
     const baseItems = [
@@ -67,6 +69,15 @@ export function Sidebar() {
   }
 
   const navItems = getNavItems()
+
+  const handleLogout = () => {
+    ApiService.post(URLS.AUTH.LOGOUT, {})
+      .then(() => {
+        router.push("/")
+
+        console.log("Logout com sucesso!")
+      })
+  }
 
   return (
     <div className="flex flex-col h-screen bg-card border-r border-border transition-all duration-300 w-64">
@@ -128,7 +139,7 @@ export function Sidebar() {
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 h-10 text-muted-foreground hover:text-foreground"
-          onClick={() => (window.location.href = "/")}
+          onClick={() => handleLogout()}
         >
           <LogOut className="w-4 h-4 flex-shrink-0" />
           <span>Sair</span>

@@ -9,7 +9,7 @@ import URLS from "@/services/urls"
 import { Product } from "@/pages/products"
 import { Customer } from "@/pages/clients"
 import useAuth from "@/hooks/use-auth"
-import ComboBox from "./combobox"
+import ComboBox from "../ui/combobox"
 import Toast from "@/utils/toast"
 import { Promotion } from "@/app/manager/promotions/page"
 

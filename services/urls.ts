@@ -37,7 +37,8 @@ const URLS = {
             STATUS: (employee_id: number) => `user/employee/status/${employee_id}`,
             UPDATE: (employee_id: number) => `user/employee/${employee_id}`,
             PROMOTE: (employee_id: number) => `user/employee/promote/${employee_id}`,
-            DEMOTE: (employee_id: number) => `user/employee/demote/${employee_id}`
+            DEMOTE: (employee_id: number) => `user/employee/demote/${employee_id}`,
+            ACTIVATE: (token?: string | null) => `user/employee/activate?token=${token}`
         },
         MANAGER: {
             LIST: "user/employee?role=M"
@@ -45,7 +46,11 @@ const URLS = {
     },
     AUTH: {
         LOGIN: "auth/login",
+        LOGOUT: "auth/logout",
         REFRESH: "auth/refresh"
+    },
+    METRICS: {
+        RETRIEVE: "metrics"
     }
 };
 

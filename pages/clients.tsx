@@ -13,7 +13,7 @@ import URLS from "@/services/urls"
 import { formatCPF } from "@/utils/cpf"
 import normalize from "@/utils/nomalize"
 import useAuth from "@/hooks/use-auth"
-import ClientDialog, { ClientForm } from "@/components/client-dialog"
+import ClientDialog, { ClientForm } from "@/components/dialog/client-dialog"
 import Toast from "@/utils/toast"
 import { RoleEnum, RoleType } from "@/@types/role"
 

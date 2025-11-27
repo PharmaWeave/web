@@ -11,7 +11,7 @@ import ApiService, { ApiResponse } from "@/services/api"
 import useAuth from "@/hooks/use-auth"
 import URLS from "@/services/urls"
 import { formatCPF } from "@/utils/cpf"
-import SaleDialog, { SaleForm } from "@/components/sale-dialog"
+import SaleDialog, { SaleForm } from "@/components/dialog/sale-dialog"
 import Toast from "@/utils/toast"
 
 export interface Sale {
