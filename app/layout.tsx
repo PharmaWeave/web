@@ -11,9 +11,8 @@ import AuthGuard from "@/components/auth/auth-guard"
 import { Toaster } from "@/components/ui/sonner"
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.app",
+  title: "PharmaWeave",
+  description: "PharmaWeave"
 }
 
 export default function RootLayout({

@@ -13,6 +13,8 @@ import URLS from "@/services/urls"
 import { formatCPF } from "@/utils/cpf"
 import SaleDialog, { SaleForm } from "@/components/dialog/sale-dialog"
 import Toast from "@/utils/toast"
+import { RoleEnum } from "@/@types/role"
+import { EmployeeMetrics } from "@/@types/metrics"
 
 export interface Sale {
     sale_id: number;
@@ -52,6 +54,12 @@ export default function SalesPage() {
     const { auth } = useAuth()
 
     const [sales, setSales] = useState<Sale[]>([])
+    const [metrics, setMetrics] = useState<EmployeeMetrics>({
+        today_sales: 0,
+        today_revenue: 0,
+        growth_percentage: 0
+    })
+
     const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, total: 0, total_pages: 1 })
     const [loading, setLoading] = useState(false)
 
@@ -71,8 +79,16 @@ export default function SalesPage() {
         }
     }
 
+    const fetchMetrics = () => {
+        ApiService.get(URLS.METRICS.RETRIEVE, {}, auth?.access_token)
+            .then((data: ApiResponse<EmployeeMetrics>) => {
+                setMetrics(data.data)
+            })
+    }
+
     useEffect(() => {
         fetchSales(1)
+        fetchMetrics()
     }, [auth])
 
     const handlePrev = () => {
@@ -129,18 +145,35 @@ export default function SalesPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
-                    <StatCard
-                        title="Vendas Hoje"
-                        value="47"
-                        subtitle="+15% vs ontem"
-                        icon={ShoppingCart}
-                    />
-                    <StatCard
-                        title="Faturamento Hoje"
-                        value="R$ 6,847"
-                        subtitle="+8% vs ontem"
-                        icon={DollarSign}
-                    />
+                    {auth?.role === RoleEnum.MANAGER ? (
+                        <>
+                            <StatCard
+                                title="Total de Vendas Hoje"
+                                value={metrics.today_sales}
+                                icon={ShoppingCart}
+                            />
+                            <StatCard
+                                title="Faturamento Hoje"
+                                value={"R$ " + (metrics.today_revenue / 100).toFixed(2)}
+                                subtitle={(metrics.growth_percentage > 0 ? "+" : "") + metrics.growth_percentage + "% vs ontem"}
+                                icon={DollarSign}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <StatCard
+                                title="Vendas Hoje"
+                                value={metrics.today_sales}
+                                icon={ShoppingCart}
+                            />
+                            <StatCard
+                                title="Faturamento Pessoal (Hoje)"
+                                value={"R$ " + (metrics.today_revenue / 100).toFixed(2)}
+                                subtitle={(metrics.growth_percentage > 0 ? "+" : "") + metrics.growth_percentage + "% vs ontem"}
+                                icon={DollarSign}
+                            />
+                        </>
+                    )}
                 </div>
 
                 <Card className="gradient-card border-border/50">
@@ -191,12 +224,12 @@ export default function SalesPage() {
                                 <ChevronLeft className="w-4 h-4" />
                             </Button>
                             <span>
-                                Página {pagination.page} de {pagination.total_pages}
+                                Página {Math.min(pagination.page, pagination.total_pages)} de {pagination.total_pages}
                             </span>
                             <Button
                                 size="sm"
                                 onClick={handleNext}
-                                disabled={pagination.page === pagination.total_pages || loading}
+                                disabled={pagination.page === pagination.total_pages || loading || !pagination.total_pages}
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </Button>

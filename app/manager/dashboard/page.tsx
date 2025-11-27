@@ -1,5 +1,6 @@
 "use client"
 
+import { EmployeeMetrics } from "@/@types/metrics"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { StatCard } from "@/components/ui/stat-card"
 import useAuth from "@/hooks/use-auth"
@@ -7,12 +8,6 @@ import ApiService, { ApiResponse } from "@/services/api"
 import URLS from "@/services/urls"
 import { DollarSign, ShoppingCart } from "lucide-react"
 import { useEffect, useState } from "react"
-
-interface EmployeeMetrics {
-  today_sales: number;
-  today_revenue: number;
-  growth_percentage: number;
-}
 
 export default function ManagerDashboard() {
   const { auth } = useAuth()
@@ -34,7 +29,7 @@ export default function ManagerDashboard() {
     <DashboardLayout>
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Painel do Administrador</h1>
+          <h1 className="text-3xl font-bold text-foreground">Painel do Gerente</h1>
           <p className="text-muted-foreground">Visão geral do sistema</p>
         </div>
 
