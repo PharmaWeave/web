@@ -1,0 +1,41 @@
+import { expect, test } from '@playwright/test';
+
+const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+test('test', async ({ page }) => {
+  await page.goto('http://localhost:3000/');
+  await page.getByRole('textbox', { name: 'CPF/CNPJ' }).click(); await delay(750);
+  await page.getByRole('textbox', { name: 'CPF/CNPJ' }).fill('51305132000162'); await delay(750);
+  await page.getByRole('textbox', { name: 'Senha' }).click(); await delay(750);
+  await page.getByRole('textbox', { name: 'Senha' }).fill('password'); await delay(750);
+  await page.getByRole('button', { name: 'Entrar' }).click(); await delay(750);
+  await page.getByRole('button', { name: 'Gerentes' }).click(); await delay(750);
+  await page.getByRole('button', { name: 'Promover Funcionário' }).click(); await delay(750);
+  await page.getByRole('button', { name: 'Selecione um funcionário para' }).click(); await delay(750);
+  await page.getByText('Mateus Vieira - 883.906.490-').click(); await delay(750);
+  await page.getByRole('button', { name: 'Promover Funcionário' }).click(); await delay(750);
+  await page.getByRole('button', { name: 'Sair' }).click(); await delay(750);
+  await page.getByRole('textbox', { name: 'CPF/CNPJ' }).click(); await delay(750);
+  await page.getByRole('textbox', { name: 'CPF/CNPJ' }).fill('88390649071'); await delay(750);
+  await page.getByRole('textbox', { name: 'Senha' }).click(); await delay(750);
+  await page.getByRole('textbox', { name: 'Senha' }).fill('password'); await delay(750);
+  await page.getByRole('button', { name: 'Entrar' }).click(); await delay(750);
+  await page.getByRole('button', { name: 'Promoções' }).click(); await delay(750);
+  await page.getByRole('button', { name: 'Nova Promoção' }).click(); await delay(750);
+  await page.getByRole('textbox', { name: 'Título' }).fill('Titulo'); await delay(750);
+  await page.getByRole('textbox', { name: 'Descrição' }).click(); await delay(750);
+  await page.getByRole('textbox', { name: 'Descrição' }).fill('Black Friday'); await delay(750);
+  await page.getByRole('spinbutton', { name: 'Valor de Desconto' }).click(); await delay(750);
+  await page.getByRole('spinbutton', { name: 'Valor de Desconto' }).fill('20'); await delay(750);
+  await page.getByRole('spinbutton', { name: 'Valor Mínimo da Compra' }).click(); await delay(750);
+  await page.getByRole('spinbutton', { name: 'Valor Mínimo da Compra' }).fill('100'); await delay(750);
+  await page.getByRole('textbox', { name: 'Início' }).click(); await delay(750);
+  await page.getByRole('textbox', { name: 'Início' }).fill('2025-11-25T00:00'); await delay(750);
+  await page.getByRole('textbox', { name: 'Fim' }).click(); await delay(750);
+  await page.getByRole('textbox', { name: 'Fim' }).fill('2025-12-30T00:00'); await delay(750);
+  await page.getByRole('button', { name: 'Selecione os produtos... ▾' }).click(); await delay(750);
+  await page.getByText('Produto', { exact: true }).click(); await delay(750);
+  await page.getByRole('button', { name: 'Cadastrar Promoção' }).click(); await delay(750);
+  await expect(page.getByText('TituloBlack FridayAtivaValor FixoDesconto:R$ 20.00Compra mín:R$ 100.00Período:')).toHaveCount(1); await delay(750);
+  await page.getByRole('button', { name: 'Sair' }).click(); await delay(750);
+});
