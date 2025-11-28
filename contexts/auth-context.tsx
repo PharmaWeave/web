@@ -30,6 +30,11 @@ interface AuthContextProviderProps {
     children: React.ReactNode;
 }
 
+const FreeEndpoints = [
+    "/employee/activate",
+    "/signup"
+];
+
 export const AuthContext = createContext({} as AuthContextType);
 
 const AuthContextProvider = ({ children, ...props }: AuthContextProviderProps) => {
@@ -93,7 +98,7 @@ const AuthContextProvider = ({ children, ...props }: AuthContextProviderProps) =
                     break;
             }
         } else {
-            if (!path?.includes("/employee/activate")) router.push("/")
+            if (!FreeEndpoints.some(p => path?.includes(p))) router.push("/")
         }
     }, [auth]);
 

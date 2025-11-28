@@ -11,8 +11,11 @@ import ApiService from "@/services/api"
 import URLS from "@/services/urls"
 import useAuth from "@/hooks/use-auth"
 import { formatCPFOrCNPJ } from "@/utils/cpf"
+import { useRouter } from "next/navigation"
 
 export function LoginForm() {
+  const router = useRouter()
+
   const { setAuth } = useAuth();
 
   const [register, setRegister] = useState("")
@@ -68,6 +71,13 @@ export function LoginForm() {
             Entrar
           </Button>
         </form>
+
+        <Label
+          className="flex justify-center items-center hover:cursor-pointer"
+          onClick={() => router.push("/signup")}
+        >
+          Não tem conta? Cadastre-se!
+        </Label>
       </CardContent>
     </Card>
   )

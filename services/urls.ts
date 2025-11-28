@@ -42,6 +42,9 @@ const URLS = {
         },
         MANAGER: {
             LIST: "user/employee?role=M"
+        },
+        ADMIN: {
+            SIGNUP: "user/signup"
         }
     },
     AUTH: {
