@@ -29,7 +29,7 @@ export default function SignUpPage() {
         if (!canSubmit) return
 
         ApiService.post(URLS.USER.ADMIN.SIGNUP, {
-            register: register.replace(/\./g, "").replace(/\-/g, ""),
+            register: register.replace(/\D/g, ""),
             legal_name: legalName,
             password: password
         }).then(() => {
